@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 8 
   },
+   cpassword: { 
+    type: String, 
+    required: true,
+    minlength: 8 
+  },
   
   // Role & Access
   role: { 
