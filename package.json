@@ -1,6 +1,14 @@
 {
   "dependencies": {
+    "@react-router/dev": "^7.14.2",
+    "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.15.2",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "vite-tsconfig-paths": "^6.1.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.13",
+    "tailwindcss": "^4.2.4"
   }
 }
