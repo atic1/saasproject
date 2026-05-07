@@ -86,7 +86,8 @@ const BusinessRegistration = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto my-10 p-6 md:p-10 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 text-left relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-24 pb-12 px-4">
+    <div className="max-w-3xl mx-auto p-6 md:p-10 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 text-left relative overflow-hidden">
       {/* Top Gradient Border */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-purple-400 to-blue-500"></div>
 
@@ -329,6 +330,7 @@ const BusinessRegistration = () => {
         </div>
 
       </form>
+    </div>
     </div>
   );
 };
