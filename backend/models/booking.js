@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const bookingSchema = new mongoose.Schema({
   businessId: { 
     type: String, 
@@ -83,3 +85,4 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.index({ businessId: 1, date: 1, startTime: 1 });
 bookingSchema.index({ businessId: 1, staffId: 1, date: 1 });
 bookingSchema.index({ businessId: 1, customerId: 1, status: 1 });
+module.exports = mongoose.model('Booking', bookingSchema);
