@@ -13,6 +13,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/businesses', require('./routes/businessRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 app.get("/", (req, res) => {
     res.send("Server running...");

@@ -223,4 +223,6 @@ const businessSchema = new mongoose.Schema({
 businessSchema.index({ type: 1, city: 1, status: 1 });
 businessSchema.index({ 'seo.rating': -1 });
 
+
 module.exports = mongoose.model('Business', businessSchema);
+
