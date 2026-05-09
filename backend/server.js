@@ -11,8 +11,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dashboardRoutes = require('./routes/dashboardRoutes');
-app.use('/api/dashboard', dashboardRoutes);
+// Routes
+app.use('/api/businesses', require('./routes/businessRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 app.get("/", (req, res) => {
     res.send("Server running...");

@@ -1,82 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { LayoutDashboard, Store, Loader2, Sparkles } from 'lucide-react';
+
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import BusinessRegistration from './pages/BusinessRegistration';
 import SuperadminDashboard from './pages/SuperadminDashboard';
-import BusinessDashboard from './pages/BusinessDashboard';
-import './App.css';
 
 function App() {
-  const [businesses, setBusinesses] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch businesses for the dynamic sidebar
-    fetch('http://localhost:5000/api/dashboard/superadmin')
-      .then(res => res.json())
-      .then(data => {
-        setBusinesses(data.businesses || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load sidebar data", err);
-        setLoading(false);
-      });
-  }, []);
-
   return (
-    <Router>
-      <div className="app-container">
-        {/* Dynamic Sidebar Navigation */}
-        <nav className="sidebar">
-          <div className="sidebar-logo">
-            <Sparkles size={28} color="#818cf8" />
-            <h2>SaaS Platform</h2>
-          </div>
-          <ul>
-            <li>
-              <Link to="/superadmin">
-                <LayoutDashboard size={20} />
-                Superadmin Panel
-              </Link>
-            </li>
-            
-            <div style={{ marginTop: '20px', marginBottom: '10px', fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', paddingLeft: '16px' }}>
-              Your Businesses
-            </div>
+    <BrowserRouter>
+      <Navbar />
 
-            {loading ? (
-              <li style={{ padding: '0 16px', color: '#94a3b8' }}>
-                <Loader2 size={16} className="spinner" style={{ display: 'inline', marginRight: '8px' }} /> 
-                Loading...
-              </li>
-            ) : businesses.map(business => (
-              <li key={business.id}>
-                <Link to={`/business/${business.id}`}>
-                  <Store size={20} />
-                  {business.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<BusinessRegistration />} />
+        <Route path="/dashboard" element={<SuperadminDashboard />} />
 
-        {/* Main Content Area */}
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={
-              <div className="loading-container">
-                <Sparkles size={48} color="#6366f1" />
-                <h1>Welcome back!</h1>
-                <p>Select a dashboard from the sidebar to get started.</p>
-              </div>
-            } />
-            <Route path="/superadmin" element={<SuperadminDashboard />} />
-            <Route path="/business/:businessId" element={<BusinessDashboard />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+        {/* Fallback route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
+
+function NotFound() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-center px-4 pt-16">
+      <div className="text-8xl mb-6">🏔️</div>
+      <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3">404 – Page Not Found</h1>
+      <p className="text-gray-500 dark:text-gray-400 mb-8">This page got lost in the visit again.</p>
+      <a
+        href="/"
+        className="px-7 py-3 rounded-2xl font-bold text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 shadow-lg shadow-purple-500/30 transition-all hover:-translate-y-0.5"
+      >
+        Go Home
+      </a>
+    </div>
+
+  )
+}
+
 
 export default App;
