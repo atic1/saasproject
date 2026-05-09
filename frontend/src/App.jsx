@@ -1,26 +1,35 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import SuperadminDashboard from './pages/SuperadminDashboard';
+import BusinessDashboard from './pages/BusinessDashboard';
+import './App.css';
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    axios.get("http://localhost:5000/")
-      .then((res) => {
-        setMessage(res.data); // backend response
-      })
-      .catch((err) => {
-        console.log(err);
-        setMessage("Backend not connected ❌");
-      });
-  }, []);
-
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>MERN Frontend</h1>
-      <h2>Backend Message:</h2>
-      <p>{message}</p>
-    </div>
+    <Router>
+      <div className="app-container">
+        {/* Simple Sidebar Navigation */}
+        <nav className="sidebar">
+          <h2>SaaS Platform</h2>
+          <ul>
+            <li><Link to="/superadmin">Superadmin Panel</Link></li>
+            <li><Link to="/business/b1">Gym Dashboard (FitZone)</Link></li>
+            <li><Link to="/business/b2">Clinic Dashboard (Smile)</Link></li>
+            <li><Link to="/business/b3">Salon Dashboard (Glow)</Link></li>
+          </ul>
+        </nav>
+
+        {/* Main Content Area */}
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<h1 style={{padding: '20px'}}>Select a dashboard from the sidebar</h1>} />
+            <Route path="/superadmin" element={<SuperadminDashboard />} />
+            <Route path="/business/:businessId" element={<BusinessDashboard />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
