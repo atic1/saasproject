@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const userSchema = new mongoose.Schema({
   // Identity
   name: { 
@@ -96,3 +98,4 @@ const userSchema = new mongoose.Schema({
 
 userSchema.index({ businessId: 1, role: 1 });
 userSchema.index({ phone: 1, businessId: 1 }, { unique: true });
+module.exports = mongoose.model('User', userSchema);
