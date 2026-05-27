@@ -2,25 +2,43 @@ const express = require('express');
 const router = express.Router();
 const Business = require('../models/business');
 const Booking = require('../models/booking');
+const User = require('../models/user');
+const Customer = require('../models/customer');
+const Payment = require('../models/payment');
 
 // SUPERADMIN DASHBOARD ROUTE
 router.get('/superadmin', async (req, res) => {
     try {
         const businesses = await Business.find({});
         
-        // Mocking some stats that aren't in the DB directly
         const totalBusinesses = businesses.length;
-        const totalUsers = 154; // Mocked
-        const monthlyRecurringRevenue = businesses.length * 50000; // Mocked NPR 50k per business
+        const totalUsers = await User.countDocuments({});
         
-        // Add mocked revenue to businesses for the UI table
-        const businessesWithMockData = businesses.map(b => ({
+        // Aggregate total revenue from all completed payments
+        const revenueAggregation = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: null, totalRevenue: { $sum: "$amount.total" } } }
+        ]);
+        const monthlyRecurringRevenue = revenueAggregation.length > 0 ? revenueAggregation[0].totalRevenue : 0;
+        
+        // Fetch revenue per business
+        const businessRevenues = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: "$businessId", totalRevenue: { $sum: "$amount.total" } } }
+        ]);
+        
+        const revenueMap = {};
+        businessRevenues.forEach(br => {
+            revenueMap[br._id] = br.totalRevenue;
+        });
+
+        const businessesWithRealData = businesses.map(b => ({
             id: b._id,
             name: b.name,
             type: b.type,
             plan: b.subscription?.plan || 'starter',
             status: b.status,
-            revenue: b.type === 'gym' ? 50000 : (b.type === 'clinic' ? 120000 : 30000)
+            revenue: revenueMap[b._id.toString()] || 0
         }));
 
         res.json({
@@ -29,7 +47,7 @@ router.get('/superadmin', async (req, res) => {
                 totalUsers,
                 monthlyRecurringRevenue
             },
-            businesses: businessesWithMockData
+            businesses: businessesWithRealData
         });
     } catch (error) {
         console.error(error);
@@ -43,25 +61,33 @@ router.get('/business/:businessId', async (req, res) => {
         const business = await Business.findById(req.params.businessId);
         if (!business) return res.status(404).json({ message: "Business not found" });
 
-        const recentBookings = await Booking.find({ businessId: req.params.businessId }).sort({ date: 1 }).limit(10);
+        const recentBookings = await Booking.find({ businessId: req.params.businessId }).sort({ date: -1 }).limit(10);
         
         // Map bookings for UI
         const mappedBookings = recentBookings.map(b => ({
             id: b._id,
             customer: b.customerName,
             type: b.type,
-            date: b.date.toISOString().split('T')[0],
+            date: b.date ? b.date.toISOString().split('T')[0] : 'N/A',
             time: b.startTime,
             status: b.status
         }));
+
+        const totalMembers = await Customer.countDocuments({ businessId: req.params.businessId });
+        
+        const revenueAggregation = await Payment.aggregate([
+            { $match: { businessId: req.params.businessId, status: 'completed' } },
+            { $group: { _id: null, totalRevenue: { $sum: "$amount.total" } } }
+        ]);
+        const totalRevenue = revenueAggregation.length > 0 ? revenueAggregation[0].totalRevenue : 0;
 
         res.json({
             business: {
                 id: business._id,
                 name: business.name,
                 type: business.type,
-                members: business.type === 'gym' ? 120 : (business.type === 'clinic' ? 450 : 80), // Mocked
-                revenue: business.type === 'gym' ? 50000 : (business.type === 'clinic' ? 120000 : 30000) // Mocked
+                members: totalMembers,
+                revenue: totalRevenue
             },
             recentBookings: mappedBookings
         });

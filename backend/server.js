@@ -15,6 +15,9 @@ app.use(express.json());
 app.use('/api/businesses', require('./routes/businessRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/plans', require('./routes/planRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.get("/", (req, res) => {
     res.send("Server running...");

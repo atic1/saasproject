@@ -4,6 +4,9 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import BusinessRegistration from './pages/BusinessRegistration';
 import SuperadminDashboard from './pages/SuperadminDashboard';
+import BusinessDashboard from './pages/BusinessDashboard';
+import PlansManagement from './pages/PlansManagement';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -12,8 +15,11 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<BusinessRegistration />} />
         <Route path="/dashboard" element={<SuperadminDashboard />} />
+        <Route path="/admin/:businessId" element={<BusinessDashboard />} />
+        <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
 
         {/* Fallback route */}
         <Route path="*" element={<NotFound />} />
