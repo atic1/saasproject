@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const businessSchema = new mongoose.Schema({
   // Identity
   slug: { 
@@ -220,3 +222,7 @@ const businessSchema = new mongoose.Schema({
 // Indexes
 businessSchema.index({ type: 1, city: 1, status: 1 });
 businessSchema.index({ 'seo.rating': -1 });
+
+
+module.exports = mongoose.model('Business', businessSchema);
+

@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const notificationSchema = new mongoose.Schema({
   businessId: { 
     type: String, 
@@ -59,3 +61,5 @@ const notificationSchema = new mongoose.Schema({
 
 notificationSchema.index({ businessId: 1, status: 1 });
 notificationSchema.index({ businessId: 1, recipientId: 1, createdAt: -1 });
+
+module.exports = mongoose.model('Notification', notificationSchema);

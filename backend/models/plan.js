@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const planSchema = new mongoose.Schema({
   businessId: { 
     type: String, 
@@ -66,3 +68,5 @@ const planSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+module.exports = mongoose.model('Plan', planSchema);
