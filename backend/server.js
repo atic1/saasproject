@@ -13,6 +13,10 @@ app.use(express.json());
 
 // Tenant isolation middleware: ensures each request has a valid business context
 const { enforceTenant } = require('./middleware/tenantIsolation');
+// Routes
+app.use('/api/businesses', require('./routes/businessRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const authRoutes = require('./routes/authRoutes');

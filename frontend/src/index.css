@@ -322,3 +322,13 @@ a {
   html { font-size: 14px; }
   .container { padding-left: 16px; padding-right: 16px; }
 }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9333ea;
+}
