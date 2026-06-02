@@ -33,9 +33,17 @@ const enforceTenant = async (req, res, next) => {
     const queryBusinessId = req.query && req.query.businessId;
     const tokenBusinessId = decoded.activeBusinessId; // optional, if stored in token
 
-    const businessId = headerBusinessId || bodyBusinessId || queryBusinessId || tokenBusinessId;
+    const businessId = headerBusinessId || tokenBusinessId;
     if (!businessId) {
       return res.status(400).json({ message: 'businessId required (X-Business-Id header or request field)' });
+    }
+    
+    if (
+      membership.businessId.status !== 'active'
+    ) {
+      return res.status(403).json({
+        message: 'Business inactive'
+      });
     }
 
     // 3. Verify membership for this user & business
