@@ -69,7 +69,14 @@ const businessSchema = new mongoose.Schema({
     capacity: { type: Number, default: 50 },
     squareFeet: Number
   },
-  
+
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true
+},
+
   // Operating Hours
   timings: {
     timezone: { 
@@ -105,7 +112,7 @@ const businessSchema = new mongoose.Schema({
     },
     status: { 
       type: String, 
-      enum: ['active', 'trial', 'expired', 'suspended', 'cancelled'],
+      enum: ['trial', 'active', 'past_due', 'suspended', 'cancelled'],
       default: 'trial'
     },
     trialEnds: Date,

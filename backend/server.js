@@ -11,9 +11,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dashboardRoutes = require('./routes/dashboardRoutes');
-app.use('/api/dashboard', dashboardRoutes);
+// Tenant isolation middleware: ensures each request has a valid business context
+const { enforceTenant } = require('./middleware/tenantIsolation');
 
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const authRoutes = require('./routes/authRoutes');
+const selectBusinessRoutes = require('./routes/select-business');
+
+// Apply tenant isolation only to dashboard routes
+app.use('/api/dashboard', enforceTenant, dashboardRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', selectBusinessRoutes);
 app.get("/", (req, res) => {
     res.send("Server running...");
 });
