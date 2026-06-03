@@ -7,128 +7,165 @@ const Business = require('../models/business');
 const BusinessMember = require('../models/businessMember');
 
 //
-// 🔐 TOKEN GENERATOR
+// 🔐 JWT GENERATOR
 //
-const generateToken = (userId) => {
+const generateToken = (id) => {
   return jwt.sign(
-    { id: userId },
+    { id },
     process.env.JWT_SECRET || 'secret123',
     { expiresIn: '30d' }
   );
 };
 
 //
-// 🟢 REGISTER (creates global user + business + membership)
+// 🟢 REGISTER (GLOBAL USER + BUSINESS + MEMBERSHIP)
 //
 router.post('/register', async (req, res) => {
   try {
-    const { name, phone, password, businessName, businessType } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      password,
+      businessName,
+      businessType,
+      slug
+    } = req.body;
 
-    // 1. Check user exists
-    const existingUser = await User.findOne({ phone });
+    // Check existing user
+    const existingUser = await User.findOne({
+      $or: [{ phone }, { email }]
+    });
+
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // 2. Create User (global identity)
+    // Create user
     const user = await User.create({
       name,
       phone,
+      email,
       password,
-      platformrole: 'customer'
+      platformrole: "customer"
     });
 
-    // 3. Create Business
+    // Create business
     const business = await Business.create({
       name: businessName,
-      slug: businessName.toLowerCase().replace(/\s+/g, '-'),
       type: businessType,
+      slug: slug || businessName.toLowerCase().replace(/\s+/g, '-'),
+      ownerId: user._id,
+      status: "pending_verification",
       contact: {
-        phone
+        phone: phone || "9800000000",
+        city: "kathmandu"
       }
     });
 
-    // 4. Create Membership (OWNER)
+    // Create membership
     await BusinessMember.create({
       userId: user._id,
       businessId: business._id,
-      role: 'owner'
+      role: "owner"
     });
 
-    // 5. Return JWT + memberships
     const token = generateToken(user._id);
 
-    return res.status(201).json({
-      success: true,
+    const membershipsFormatted = [
+      {
+        businessId: business._id.toString(),
+        businessName: business.name,
+        businessType: business.type,
+        role: "owner"
+      }
+    ];
+
+    res.status(201).json({
+      message: "Account created successfully",
       token,
       user: {
         id: user._id,
         name: user.name,
-        phone: user.phone
+        email: user.email,
+        phone: user.phone,
+        memberships: membershipsFormatted
       },
-      memberships: [
-        {
-          businessId: business._id,
-          businessName: business.name,
-          businessType: business.type,
-          role: 'owner'
-        }
-      ]
+      memberships: membershipsFormatted
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
   }
 });
 
 //
-// 🔑 LOGIN (real SaaS login)
+// 🔑 LOGIN (MULTI-IDENTIFIER SaaS LOGIN)
 //
 router.post('/login', async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, email, password } = req.body;
 
-    // 1. Find user
-    const user = await User.findOne({ phone });
+    const loginIdentifier = phone || email;
+
+    if (!loginIdentifier) {
+      return res.status(400).json({ message: "Phone or email required" });
+    }
+
+    // Find user
+    const user = await User.findOne({
+      $or: [
+        { phone: loginIdentifier },
+        { email: loginIdentifier }
+      ]
+    });
+
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // 2. Check password
+    // Validate password
     const isMatch = await user.matchPassword(password);
+
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 3. Get memberships
-    const memberships = await BusinessMember.find({
-      userId: user._id
-    }).populate('businessId');
+    // Get memberships
+    const memberships = await BusinessMember.find({ userId: user._id })
+      .populate("businessId");
 
-    // 4. Format response
-    const formatted = memberships.map(m => ({
-      businessId: m.businessId._id,
-      businessName: m.businessId.name,
-      businessType: m.businessId.type,
-      role: m.role
-    }));
+    const membershipsFormatted = memberships
+      .filter(m => m.businessId)
+      .map(m => ({
+        businessId: m.businessId._id.toString(),
+        businessName: m.businessId.name,
+        businessType: m.businessId.type,
+        role: m.role
+      }));
 
-    return res.json({
-      success: true,
-      token: generateToken(user._id),
+    const token = generateToken(user._id);
+
+    res.json({
+      token,
       user: {
         id: user._id,
         name: user.name,
+        email: user.email,
         phone: user.phone,
-        platformrole: user.platformrole
+        memberships: membershipsFormatted
       },
-      memberships: formatted
+      memberships: membershipsFormatted
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
   }
 });
 

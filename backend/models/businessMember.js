@@ -17,21 +17,30 @@ const businessMemberSchema = new mongoose.Schema({
     index: true
   },
 
-  // Role inside THIS business (NOT platform role)
+  // Role inside this business (tenant-scoped RBAC)
   role: {
     type: String,
-    enum: ['owner', 'manager', 'staff', 'trainer', 'receptionist'],
+    enum: [
+      'owner',
+      'manager',
+      'trainer',
+      'doctor',
+      'stylist',
+      'receptionist',
+      'staff',
+      'customer'
+    ],
     required: true
   },
 
-  // Status inside business
+  // Membership status
   status: {
     type: String,
     enum: ['active', 'inactive', 'suspended'],
     default: 'active'
   },
 
-  // Permissions override (optional future expansion)
+  // Flexible permissions override (future-proof RBAC)
   permissions: [
     {
       resource: String,
@@ -39,13 +48,14 @@ const businessMemberSchema = new mongoose.Schema({
     }
   ],
 
-  createdAt: {
+  // When user joined this business
+  joinedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Prevent duplicate membership
+// Prevent duplicate membership per tenant
 businessMemberSchema.index(
   { userId: 1, businessId: 1 },
   { unique: true }
