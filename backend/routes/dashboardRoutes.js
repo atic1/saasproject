@@ -18,7 +18,6 @@ const { enforceTenant } = require('../middleware/tenantIsolation');
 //
 router.get('/superadmin', protect, async (req, res) => {
   try {
-    // Role check
     if (req.user.platformrole !== 'super_admin') {
       return res.status(403).json({ message: 'Access denied' });
     }
@@ -28,10 +27,14 @@ router.get('/superadmin', protect, async (req, res) => {
     const totalBusinesses = businesses.length;
     const totalUsers = await User.countDocuments({});
 
-    // Revenue aggregation (real)
     const revenueAggregation = await Payment.aggregate([
       { $match: { status: 'completed' } },
-      { $group: { _id: null, totalRevenue: { $sum: "$amount.total" } } }
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$amount.total" }
+        }
+      }
     ]);
 
     const monthlyRecurringRevenue =
@@ -39,15 +42,19 @@ router.get('/superadmin', protect, async (req, res) => {
         ? revenueAggregation[0].totalRevenue
         : 0;
 
-    // Revenue per business
     const businessRevenues = await Payment.aggregate([
       { $match: { status: 'completed' } },
-      { $group: { _id: "$businessId", totalRevenue: { $sum: "$amount.total" } } }
+      {
+        $group: {
+          _id: "$businessId",
+          totalRevenue: { $sum: "$amount.total" }
+        }
+      }
     ]);
 
     const revenueMap = {};
-    businessRevenues.forEach(br => {
-      revenueMap[br._id.toString()] = br.totalRevenue;
+    businessRevenues.forEach(b => {
+      revenueMap[b._id.toString()] = b.totalRevenue;
     });
 
     const businessesWithRealData = businesses.map(b => ({
@@ -70,10 +77,9 @@ router.get('/superadmin', protect, async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 });
-
 
 //
 // =========================
@@ -88,10 +94,7 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
       return res.status(404).json({ message: 'Business not found' });
     }
 
-    // Tenant-safe bookings
-    const recentBookings = await Booking.find(
-      tenantQuery(req)
-    )
+    const recentBookings = await Booking.find(tenantQuery(req))
       .sort({ date: -1 })
       .limit(10);
 
@@ -104,12 +107,11 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
       status: b.status
     }));
 
-    // Tenant-safe revenue
     const revenueAgg = await Payment.aggregate([
       {
         $match: {
           businessId: req.activeBusinessId,
-          status: 'completed'
+          status: "completed"
         }
       },
       {
@@ -123,7 +125,6 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
     const totalRevenue =
       revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
 
-    // Customer count (tenant scoped)
     const totalMembers = await Customer.countDocuments({
       businessId: req.activeBusinessId
     });
@@ -136,15 +137,13 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
         members: totalMembers,
         revenue: totalRevenue
       },
-
       role: req.role,
-
       recentBookings: mappedBookings
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 });
 

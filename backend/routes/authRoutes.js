@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 const Business = require('../models/business');
 const BusinessMember = require('../models/businessMember');
+const jwt = require('jsonwebtoken');
 
 //
 // 🔐 JWT GENERATOR
@@ -18,7 +18,7 @@ const generateToken = (id) => {
 };
 
 //
-// 🟢 REGISTER (GLOBAL USER + BUSINESS + MEMBERSHIP)
+// 🟢 REGISTER USER (SaaS MULTI-TENANT)
 //
 router.post('/register', async (req, res) => {
   try {
@@ -32,7 +32,6 @@ router.post('/register', async (req, res) => {
       slug
     } = req.body;
 
-    // Check existing user
     const existingUser = await User.findOne({
       $or: [{ phone }, { email }]
     });
@@ -41,7 +40,6 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Create user
     const user = await User.create({
       name,
       phone,
@@ -50,7 +48,6 @@ router.post('/register', async (req, res) => {
       platformrole: "customer"
     });
 
-    // Create business
     const business = await Business.create({
       name: businessName,
       type: businessType,
@@ -63,7 +60,6 @@ router.post('/register', async (req, res) => {
       }
     });
 
-    // Create membership
     await BusinessMember.create({
       userId: user._id,
       businessId: business._id,
@@ -103,7 +99,7 @@ router.post('/register', async (req, res) => {
 });
 
 //
-// 🔑 LOGIN (MULTI-IDENTIFIER SaaS LOGIN)
+// 🔑 LOGIN (MULTI-TENANT SAAS LOGIN)
 //
 router.post('/login', async (req, res) => {
   try {
@@ -115,7 +111,6 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: "Phone or email required" });
     }
 
-    // Find user
     const user = await User.findOne({
       $or: [
         { phone: loginIdentifier },
@@ -127,14 +122,12 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate password
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Get memberships
     const memberships = await BusinessMember.find({ userId: user._id })
       .populate("businessId");
 

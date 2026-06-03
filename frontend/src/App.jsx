@@ -11,9 +11,6 @@ import BusinessDashboard from './pages/BusinessDashboard';
 import PlansManagement from './pages/PlansManagement';
 import Login from './pages/Login';
 
-//
-// 404 Page
-//
 function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-center px-4 pt-16">
@@ -45,12 +42,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<BusinessRegistration />} />
 
-          {/* Dashboards */}
           <Route path="/dashboard" element={<SuperadminDashboard />} />
           <Route path="/admin/:businessId" element={<BusinessDashboard />} />
           <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
 
-          {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

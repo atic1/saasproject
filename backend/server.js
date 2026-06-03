@@ -1,49 +1,63 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-console.log('Loaded MONGO_URL:', !!process.env.MONGO_URL);
-
 const app = express();
-const customerRoutes = require('./routes/customerRoutes');
+
+console.log('Loaded MONGO_URL:', !!process.env.MONGO_URL);
 
 app.use(cors());
 app.use(express.json());
 
-// Tenant isolation middleware: ensures each request has a valid business context
-const { enforceTenant } = require('./middleware/tenantIsolation');
-// Routes
-app.use('/api/businesses', require('./routes/businessRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/plans', require('./routes/planRoutes'));
-app.use('/api/offers', require('./routes/offerRoutes'));
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/customers', customerRoutes);
-
+// ========================
+// ROUTES
+// ========================
+const customerRoutes = require('./routes/customerRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const authRoutes = require('./routes/authRoutes');
 const selectBusinessRoutes = require('./routes/select-business');
 
-// Apply tenant isolation only to dashboard routes
-app.use('/api/dashboard', enforceTenant, dashboardRoutes);
+// Middleware
+const { enforceTenant } = require('./middleware/tenantIsolation');
+
+// ========================
+// PUBLIC ROUTES
+// ========================
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', selectBusinessRoutes);
+
+// ========================
+// TENANT / BUSINESS ROUTES
+// ========================
+app.use('/api/dashboard', enforceTenant, dashboardRoutes);
+app.use('/api/customers', customerRoutes);
+
+// ========================
+// CORE ROUTES
+// ========================
+app.use('/api/businesses', require('./routes/businessRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/plans', require('./routes/planRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
+
+// Health check
 app.get("/", (req, res) => {
-    res.send("Server running...");
+  res.send("Server running...");
 });
 
+// ========================
+// START SERVER
+// ========================
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGO_URL)
-.then(() => {
+  .then(() => {
     console.log("MongoDB Connected ✅");
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
-})
-.catch((err) => {
+  })
+  .catch((err) => {
     console.log("DB Error:", err);
-});
+  });
