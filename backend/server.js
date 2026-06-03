@@ -7,6 +7,7 @@ require("dotenv").config();
 console.log('Loaded MONGO_URL:', !!process.env.MONGO_URL);
 
 const app = express();
+const customerRoutes = require('./routes/customerRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -18,6 +19,7 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/plans', require('./routes/planRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/customers', customerRoutes);
 
 app.get("/", (req, res) => {
     res.send("Server running...");

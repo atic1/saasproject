@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
   // Multi-tenancy
-  businessId: { 
-    type: String, 
-    required: true,
-    index: true 
-  },
+    businessId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Business',
+      required: true,
+      index: true
+    },
   
   // Identity
   name: { 
