@@ -1,16 +1,25 @@
 const express = require('express');
 const router = express.Router();
+
 const User = require('../models/user');
 const Business = require('../models/business');
 const BusinessMember = require('../models/businessMember');
 const jwt = require('jsonwebtoken');
 
-// Generate JWT
+//
+// 🔐 JWT GENERATOR
+//
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', { expiresIn: '30d' });
+  return jwt.sign(
+    { id },
+    process.env.JWT_SECRET || 'secret123',
+    { expiresIn: '30d' }
+  );
 };
 
-// Register User
+//
+// 🟢 REGISTER USER (SaaS MULTI-TENANT)
+//
 router.post('/register', async (req, res) => {
   try {
     const {
@@ -23,17 +32,15 @@ router.post('/register', async (req, res) => {
       slug
     } = req.body;
 
-    // 1. Check global user (NO businessId anymore)
-    let user = await User.findOne({ phone });
+    const existingUser = await User.findOne({
+      $or: [{ phone }, { email }]
+    });
 
-    if (user) {
-      return res.status(400).json({
-        message: "User already exists"
-      });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // 2. Create USER (GLOBAL)
-    user = await User.create({
+    const user = await User.create({
       name,
       phone,
       email,
@@ -41,11 +48,10 @@ router.post('/register', async (req, res) => {
       platformrole: "customer"
     });
 
-    // 3. Create BUSINESS
     const business = await Business.create({
       name: businessName,
       type: businessType,
-      slug,
+      slug: slug || businessName.toLowerCase().replace(/\s+/g, '-'),
       ownerId: user._id,
       status: "pending_verification",
       contact: {
@@ -54,14 +60,12 @@ router.post('/register', async (req, res) => {
       }
     });
 
-    // 4. Create BUSINESS MEMBER (OWNER ROLE)
     await BusinessMember.create({
       userId: user._id,
       businessId: business._id,
       role: "owner"
     });
 
-    // 5. Generate token
     const token = generateToken(user._id);
 
     const membershipsFormatted = [
@@ -94,17 +98,19 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login User
+//
+// 🔑 LOGIN (MULTI-TENANT SAAS LOGIN)
+//
 router.post('/login', async (req, res) => {
   try {
     const { phone, email, password } = req.body;
+
     const loginIdentifier = phone || email;
 
     if (!loginIdentifier) {
       return res.status(400).json({ message: "Phone or email required" });
     }
 
-    // 1. Find GLOBAL user
     const user = await User.findOne({
       $or: [
         { phone: loginIdentifier },
@@ -116,20 +122,17 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 2. Check password
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 3. Get all businesses user belongs to
     const memberships = await BusinessMember.find({ userId: user._id })
       .populate("businessId");
 
-    // 4. Format memberships
     const membershipsFormatted = memberships
-      .filter(m => m.businessId) // Ensure business exists
+      .filter(m => m.businessId)
       .map(m => ({
         businessId: m.businessId._id.toString(),
         businessName: m.businessId.name,
@@ -137,7 +140,6 @@ router.post('/login', async (req, res) => {
         role: m.role
       }));
 
-    // 5. Generate token
     const token = generateToken(user._id);
 
     res.json({

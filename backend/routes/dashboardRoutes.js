@@ -1,45 +1,69 @@
 const express = require('express');
 const router = express.Router();
+
 const tenantQuery = require('../utils/tenantQuery');
 const Business = require('../models/business');
 const Booking = require('../models/booking');
+const User = require('../models/user');
+const Customer = require('../models/customer');
+const Payment = require('../models/payment');
 
 const { protect } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantIsolation');
 
-/**
- * =========================
- * SUPER ADMIN DASHBOARD
- * =========================
- */
+//
+// =========================
+// SUPER ADMIN DASHBOARD
+// =========================
+//
 router.get('/superadmin', protect, async (req, res) => {
   try {
-    // PLATFORM ROLE CHECK (FIXED)
     if (req.user.platformrole !== 'super_admin') {
-      return res.status(403).json({
-        message: 'Access denied'
-      });
+      return res.status(403).json({ message: 'Access denied' });
     }
 
     const businesses = await Business.find({});
 
     const totalBusinesses = businesses.length;
-    const totalUsers = 154; // mock
-    const monthlyRecurringRevenue =
-      businesses.length * 50000;
+    const totalUsers = await User.countDocuments({});
 
-    const businessesWithMockData = businesses.map((b) => ({
+    const revenueAggregation = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$amount.total" }
+        }
+      }
+    ]);
+
+    const monthlyRecurringRevenue =
+      revenueAggregation.length > 0
+        ? revenueAggregation[0].totalRevenue
+        : 0;
+
+    const businessRevenues = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      {
+        $group: {
+          _id: "$businessId",
+          totalRevenue: { $sum: "$amount.total" }
+        }
+      }
+    ]);
+
+    const revenueMap = {};
+    businessRevenues.forEach(b => {
+      revenueMap[b._id.toString()] = b.totalRevenue;
+    });
+
+    const businessesWithRealData = businesses.map(b => ({
       id: b._id,
       name: b.name,
       type: b.type,
       plan: b.subscription?.plan || 'starter',
       status: b.status,
-      revenue:
-        b.type === 'gym'
-          ? 50000
-          : b.type === 'clinic'
-          ? 120000
-          : 30000
+      revenue: revenueMap[b._id.toString()] || 0
     }));
 
     res.json({
@@ -48,78 +72,82 @@ router.get('/superadmin', protect, async (req, res) => {
         totalUsers,
         monthlyRecurringRevenue
       },
-      businesses: businessesWithMockData
+      businesses: businessesWithRealData
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-/**
- * =========================
- * BUSINESS DASHBOARD
- * =========================
- */
-router.get(
-  '/business',
-  protect,
-  enforceTenant,
-  async (req, res) => {
-    try {
-      const business = await Business.findById(
-        req.activeBusinessId
-      );
 
-      if (!business) {
-        return res.status(404).json({
-          message: 'Business not found'
-        });
-      }
+//
+// =========================
+// BUSINESS DASHBOARD
+// =========================
+//
+router.get('/business', protect, enforceTenant, async (req, res) => {
+  try {
+    const business = await Business.findById(req.activeBusinessId);
 
-      const recentBookings = awaitBooking.find(tenantQuery(req));
-        .sort({ date: -1 })
-        .limit(10);
-
-      const mappedBookings = recentBookings.map((b) => ({
-        id: b._id,
-        customer: b.customerName,
-        type: b.type,
-        date: b.date
-          ? b.date.toISOString().split('T')[0]
-          : null,
-        time: b.startTime,
-        status: b.status
-      }));
-
-      res.json({
-        business: {
-          id: business._id,
-          name: business.name,
-          type: business.type,
-          members:
-            business.type === 'gym'
-              ? 120
-              : business.type === 'clinic'
-              ? 450
-              : 80,
-          revenue:
-            business.type === 'gym'
-              ? 50000
-              : business.type === 'clinic'
-              ? 120000
-              : 30000
-        },
-
-        role: req.role,
-
-        recentBookings: mappedBookings
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server Error' });
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
     }
+
+    const recentBookings = await Booking.find(
+      tenantQuery(req)
+    )
+      .sort({ date: -1 })
+      .limit(10);
+
+    const mappedBookings = recentBookings.map(b => ({
+      id: b._id,
+      customer: b.customerName,
+      type: b.type,
+      date: b.date ? b.date.toISOString().split('T')[0] : null,
+      time: b.startTime,
+      status: b.status
+    }));
+
+    const revenueAgg = await Payment.aggregate([
+      {
+        $match: {
+          businessId: req.activeBusinessId,
+          status: "completed"
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$amount.total" }
+        }
+      }
+    ]);
+
+    const totalRevenue =
+      revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
+
+    const totalMembers = await Customer.countDocuments({
+      businessId: req.activeBusinessId
+    });
+
+    res.json({
+      business: {
+        id: business._id,
+        name: business.name,
+        type: business.type,
+        members: totalMembers,
+        revenue: totalRevenue
+      },
+      role: req.role,
+      recentBookings: mappedBookings
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
-);
+});
 
 module.exports = router;

@@ -17,6 +17,9 @@ const { enforceTenant } = require('./middleware/tenantIsolation');
 app.use('/api/businesses', require('./routes/businessRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/plans', require('./routes/planRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const authRoutes = require('./routes/authRoutes');

@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const customerSchema = new mongoose.Schema({
   // Multi-tenancy
   businessId: { 
@@ -135,3 +137,5 @@ const customerSchema = new mongoose.Schema({
 customerSchema.index({ businessId: 1, phone: 1 }, { unique: true });
 customerSchema.index({ businessId: 1, 'membership.status': 1 });
 customerSchema.index({ businessId: 1, 'engagement.lastVisit': -1 });
+
+module.exports = mongoose.model('Customer', customerSchema);
