@@ -91,13 +91,12 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
   try {
     const business = await Business.findById(req.activeBusinessId);
 
+    // ✅ FIX: required safety check
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
 
-    const recentBookings = await Booking.find(
-      tenantQuery(req)
-    )
+    const recentBookings = await Booking.find(tenantQuery(req))
       .sort({ date: -1 })
       .limit(10);
 
