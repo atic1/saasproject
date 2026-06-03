@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const tenantQuery = require('../utils/tenantQuery');
+const tenantQuery = require('../src/utils/tenantQuery');
 const Business = require('../models/business');
 const Booking = require('../models/booking');
 const User = require('../models/user');

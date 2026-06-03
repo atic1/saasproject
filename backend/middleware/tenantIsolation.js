@@ -38,19 +38,19 @@ const enforceTenant = async (req, res, next) => {
       return res.status(400).json({ message: 'businessId required (X-Business-Id header or request field)' });
     }
     
-    if (
-      membership.businessId.status !== 'active'
-    ) {
-      return res.status(403).json({
-        message: 'Business inactive'
-      });
-    }
-
     // 3. Verify membership for this user & business
     const membership = await BusinessMember.findOne({ userId: user._id, businessId })
       .populate('businessId');
     if (!membership) {
       return res.status(403).json({ message: 'User does not have access to this business' });
+    }
+
+    if (
+      membership.businessId && membership.businessId.status !== 'active'
+    ) {
+      return res.status(403).json({
+        message: 'Business inactive'
+      });
     }
 
     // 4. Attach useful data to request for downstream handlers

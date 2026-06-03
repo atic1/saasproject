@@ -1,15 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 
-import { AuthProvider } from './context/AuthContext';
-
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import BusinessRegistration from './pages/BusinessRegistration';
-import SuperadminDashboard from './pages/SuperadminDashboard';
-import BusinessDashboard from './pages/BusinessDashboard';
-import PlansManagement from './pages/PlansManagement';
-import Login from './pages/Login';
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import AppRoutes from "./routes/AppRoutes";
 
 function NotFound() {
   return (
@@ -36,18 +30,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Navbar />
-
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<BusinessRegistration />} />
-
-          <Route path="/dashboard" element={<SuperadminDashboard />} />
-          <Route path="/admin/:businessId" element={<BusinessDashboard />} />
-          <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppRoutes />
       </Router>
     </AuthProvider>
   );
