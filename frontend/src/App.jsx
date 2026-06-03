@@ -1,13 +1,16 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import { AuthProvider } from './context/AuthContext';
-import AppRoutes from './routes/AppRoutes';
-import Navbar from './components/Navbar';
 
-//
-// 404 PAGE
-//
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import BusinessRegistration from './pages/BusinessRegistration';
+import SuperadminDashboard from './pages/SuperadminDashboard';
+import BusinessDashboard from './pages/BusinessDashboard';
+import PlansManagement from './pages/PlansManagement';
+import Login from './pages/Login';
+
 function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-center px-4 pt-16">
@@ -33,7 +36,18 @@ function App() {
     <AuthProvider>
       <Router>
         <Navbar />
-        <AppRoutes />
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<BusinessRegistration />} />
+
+          <Route path="/dashboard" element={<SuperadminDashboard />} />
+          <Route path="/admin/:businessId" element={<BusinessDashboard />} />
+          <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Router>
     </AuthProvider>
   );
