@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   // Identity
@@ -11,7 +12,7 @@ const userSchema = new mongoose.Schema({
     type: String, 
     required: true,
     match: /^98\d{8}$/,
-    index: true 
+    unique: true 
   },
   email: { 
     type: String, 
@@ -23,58 +24,29 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 8 
   },
-   cpassword: { 
-    type: String, 
-    required: true,
-    minlength: 8 
-  },
   
   // Role & Access
-  role: { 
+  platformrole: { 
     type: String, 
-    enum: ['super_admin', 'owner', 'manager', 'staff', 'trainer', 'receptionist'],
-    required: true 
+    enum: ['super_admin', 'customer'],
+    default: 'customer'
   },
   
   // Multi-tenancy
   businessId: { 
     type: String, 
-    required: true,
+    required: false,
     index: true 
   },
   
-  // For staff: which branches they belong to (future)
-  branchIds: [{ type: String }],
-  
-  // Permissions (granular, overrides role defaults)
-  permissions: [{
-    resource: String,      // 'members', 'payments', 'reports'
-    actions: [String]      // ['read', 'write', 'delete']
-  }],
-  
-  // Staff-specific
-  staffDetails: {
-    employeeId: String,
-    designation: String,
-    salary: Number,
-    commissionRate: { type: Number, default: 0 },
-    joinDate: Date,
-    documents: [{ type: String }],  // Cloudinary URLs
-    bio: String,
-    specialties: [String],   // For trainers: "weight_loss", "bodybuilding"
-    availability: [{
-      day: String,
-      start: String,
-      end: String
-    }]
-  },
-  
+
   // Security
   lastLogin: {
     at: Date,
     ip: String,
     device: String
   },
+
   loginAttempts: { type: Number, default: 0 },
   lockUntil: Date,
   passwordChangedAt: Date,
@@ -96,6 +68,17 @@ const userSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-userSchema.index({ businessId: 1, role: 1 });
-userSchema.index({ phone: 1, businessId: 1 }, { unique: true });
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Compare password
+userSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
 module.exports = mongoose.model('User', userSchema);
