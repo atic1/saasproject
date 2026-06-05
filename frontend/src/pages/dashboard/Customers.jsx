@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Plus, Search, ShieldCheck, Dumbbell, 
   Scissors, Stethoscope, Mail, Phone, Calendar 
@@ -6,11 +6,89 @@ import {
 import { useAuth } from '../../context/AuthContext';
 
 const Customers = () => {
-  const { businessType, isSuperAdmin } = useAuth();
+  const { businessType, isSuperAdmin, activeBusiness } = useAuth();
   const [search, setSearch] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    gender: 'male',
+    address: { street: '', city: 'kathmandu' }
+  });
 
   // Define accent colors
   const accentClass = isSuperAdmin ? 'admin' : businessType;
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [activeBusiness]);
+
+  const fetchCustomers = async () => {
+    setLoading(true);
+    const token = localStorage.getItem('saas_token');
+    const bId = activeBusiness?.businessId;
+    if (!token || token.startsWith('mock-') || !bId) {
+      setCustomers([]);
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/api/customers', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Business-Id': bId
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCustomers(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddCustomer = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    const bId = activeBusiness?.businessId;
+    if (!token || !bId) return;
+
+    try {
+      const res = await fetch('http://localhost:5000/api/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Business-Id': bId
+        },
+        body: JSON.stringify(newCustomer)
+      });
+
+      if (res.ok) {
+        setShowAddModal(false);
+        setNewCustomer({
+          name: '',
+          phone: '',
+          email: '',
+          gender: 'male',
+          address: { street: '', city: 'kathmandu' }
+        });
+        fetchCustomers();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to create customer');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error creating customer');
+    }
+  };
 
   // --- Dynamic Customer Directory data based on businessType ---
   const getCustomersData = () => {
@@ -46,7 +124,19 @@ const Customers = () => {
     }
   };
 
-  const allRecords = getCustomersData();
+  const allRecords = customers.length > 0 ? customers.map(c => ({
+    id: c._id,
+    name: c.name,
+    email: c.email || '',
+    phone: c.phone || '',
+    package: c.membership?.planId?.name || c.membership?.planId || 'Basic',
+    gateStatus: c.membership?.status === 'active' ? 'Checked In' : 'Checked Out',
+    preference: c.medicalInfo?.notes || '',
+    stylist: '',
+    medNo: c.qrCode?.code || 'MC-2026-N/A',
+    doc: ''
+  })) : getCustomersData();
+
   const filtered = allRecords.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.email.toLowerCase().includes(search.toLowerCase()));
 
   // Render headers
@@ -70,10 +160,12 @@ const Customers = () => {
           <h1>{headerInfo.title}</h1>
           <p>{headerInfo.desc}</p>
         </div>
-        <button className={`btn btn-primary btn-${accentClass}`}>
-          <Plus size={16} />
-          <span>Add Record</span>
-        </button>
+        {!isSuperAdmin && (
+          <button className={`btn btn-primary btn-${accentClass}`} onClick={() => setShowAddModal(true)}>
+            <Plus size={16} />
+            <span>Add Record</span>
+          </button>
+        )}
       </div>
 
       {/* Filter and search block */}
@@ -189,12 +281,126 @@ const Customers = () => {
         </div>
       </div>
 
+      {showAddModal && (
+        <div className="modal-overlay glass-modal">
+          <div className="modal-card glass animate-scale-in">
+            <div className="modal-header">
+              <h3>Register New Client</h3>
+              <button className="close-btn" onClick={() => setShowAddModal(false)}>×</button>
+            </div>
+            <form onSubmit={handleAddCustomer} className="modal-form">
+              <div className="form-group">
+                <label>Name</label>
+                <input required type="text" value={newCustomer.name} onChange={e => setNewCustomer({...newCustomer, name: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Phone (98xxxxxxxx)</label>
+                <input required type="text" pattern="^98\d{8}$" placeholder="98XXXXXXXX" value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" placeholder="client@example.com" value={newCustomer.email} onChange={e => setNewCustomer({...newCustomer, email: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Gender</label>
+                <select value={newCustomer.gender} onChange={e => setNewCustomer({...newCustomer, gender: e.target.value})} className="select-input">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <button type="submit" className={`btn btn-primary btn-${accentClass}`} style={{ marginTop: '16px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                Save Customer
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Embedded CSS */}
       <style>{`
         .customers-page {
           display: flex;
           flex-direction: column;
           gap: 24px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-card {
+          width: 90%;
+          max-width: 450px;
+          border-radius: var(--radius-lg);
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid hsla(var(--border-frosted));
+          padding-bottom: 12px;
+        }
+        .modal-header h3 {
+          font-size: 1.25rem;
+          color: hsla(var(--text-main));
+        }
+        .close-btn {
+          background: transparent;
+          border: none;
+          color: hsla(var(--text-muted));
+          font-size: 1.5rem;
+          cursor: pointer;
+          transition: color var(--transition-fast);
+        }
+        .close-btn:hover {
+          color: hsla(var(--text-main));
+        }
+        .modal-form {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .modal-form .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          text-align: left;
+        }
+        .modal-form label {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: hsla(var(--text-main));
+        }
+        .modal-form input, .modal-form select {
+          width: 100%;
+          height: 42px;
+          padding: 0 14px;
+          border-radius: var(--radius-md);
+          border: 1px solid hsla(var(--border));
+          background-color: hsla(var(--bg-base), 0.4);
+          font-family: var(--font-sans);
+          font-size: 0.95rem;
+          color: hsla(var(--text-main));
+          outline: none;
+          transition: all var(--transition-fast);
+        }
+        .modal-form input:focus, .modal-form select:focus {
+          border-color: hsla(var(--primary));
+          background-color: hsla(var(--bg-surface));
         }
         
         .page-title-row {

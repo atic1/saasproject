@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Users, Calendar, CreditCard, BarChart3, Dumbbell, Scissors, 
@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const DashboardHome = () => {
   const [searchParams] = useSearchParams();
-  const { user, isSuperAdmin, businessType } = useAuth();
+  const { user, isSuperAdmin, businessType, businessId } = useAuth();
   
   const activeTab = searchParams.get('tab') || 'overview';
   
@@ -23,17 +23,70 @@ const DashboardHome = () => {
   
   const currentAccent = isSuperAdmin ? themeColors.superadmin : themeColors[businessType];
 
+  // API State
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('saas_token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const endpoint = isSuperAdmin 
+          ? 'http://localhost:5000/api/dashboard/superadmin' 
+          : 'http://localhost:5000/api/dashboard/business';
+
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+        if (!isSuperAdmin && businessId) {
+          headers['X-Business-Id'] = businessId;
+        }
+
+        const res = await fetch(endpoint, { headers });
+        if (!res.ok) {
+          throw new Error('Failed to load dashboard data');
+        }
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        console.warn('Dashboard fetch error, using fallbacks:', err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [isSuperAdmin, businessId]);
+
   // ==========================================
   // DATA MOCKS & SUB-PANELS
   // ==========================================
 
   // --- 1. SUPERADMIN SUB-PANELS ---
   const renderSuperadminOverview = () => {
-    const tenants = [
+    const tenantsFallback = [
       { id: 'b1', name: 'FitZone Gym', type: 'gym', plan: 'Pro', status: 'Active', mrr: 14900, owner: 'Alex Rivera' },
       { id: 'b2', name: 'Smile Dental Clinic', type: 'clinic', plan: 'Growth', status: 'Active', mrr: 6900, owner: 'Dr. Marcus Vance' },
       { id: 'b3', name: 'Glow Beauty Salon', type: 'salon', plan: 'Starter', status: 'Active', mrr: 2900, owner: 'Chloe Vane' },
     ];
+
+    const activeTenants = (data?.businesses || tenantsFallback).map(t => ({
+      id: t.id || t._id,
+      name: t.name,
+      type: t.type,
+      plan: t.plan || 'Starter',
+      owner: t.owner || 'Main Owner',
+      mrr: t.revenue !== undefined ? t.revenue : (t.mrr || 0),
+      status: t.status || 'Active'
+    }));
     
     return (
       <div className="sub-panel animate-fade">
@@ -44,7 +97,9 @@ const DashboardHome = () => {
               <h3>Monthly Recurring Revenue</h3>
               <DollarSign className="stat-icon text-primary" />
             </div>
-            <p className="stat-value">NPR 24,700</p>
+            <p className="stat-value">
+              {data?.stats ? `NPR ${data.stats.monthlyRecurringRevenue.toLocaleString()}` : 'NPR 24,700'}
+            </p>
             <span className="stat-trend text-success">↑ 14.2% this month</span>
           </div>
 
@@ -53,7 +108,9 @@ const DashboardHome = () => {
               <h3>Active Businesses</h3>
               <Sparkles className="stat-icon text-primary" />
             </div>
-            <p className="stat-value">3 Tenants</p>
+            <p className="stat-value">
+              {data?.stats ? `${data.stats.totalBusinesses} Tenants` : '3 Tenants'}
+            </p>
             <span className="stat-trend text-success">100% renewal rate</span>
           </div>
 
@@ -62,7 +119,9 @@ const DashboardHome = () => {
               <h3>Operator Accounts</h3>
               <Users className="stat-icon text-primary" />
             </div>
-            <p className="stat-value">154 Users</p>
+            <p className="stat-value">
+              {data?.stats ? `${data.stats.totalUsers} Users` : '154 Users'}
+            </p>
             <span className="stat-trend text-muted">Across all directories</span>
           </div>
         </div>
@@ -86,7 +145,7 @@ const DashboardHome = () => {
                 </tr>
               </thead>
               <tbody>
-                {tenants.map(t => (
+                {activeTenants.map(t => (
                   <tr key={t.id}>
                     <td>
                       <Link to={`/app/dashboard`} onClick={() => {
@@ -159,9 +218,11 @@ const DashboardHome = () => {
                           }
                         };
                         const targetUser = db[presetEmails[t.id]];
-                        localStorage.setItem('saas_user', JSON.stringify(targetUser));
-                        localStorage.setItem('saas_active_business', JSON.stringify(targetUser.memberships[0]));
-                        window.location.reload();
+                        if (targetUser) {
+                          localStorage.setItem('saas_user', JSON.stringify(targetUser));
+                          localStorage.setItem('saas_active_business', JSON.stringify(targetUser.memberships[0]));
+                          window.location.reload();
+                        }
                       }} className="tenant-link">
                         <strong>{t.name}</strong> <ArrowUpRight size={12} className="inline-icon" />
                       </Link>
@@ -183,11 +244,19 @@ const DashboardHome = () => {
 
   // --- 2. GYM SUB-PANELS ---
   const renderGymOverview = () => {
-    const workouts = [
+    const workoutsFallback = [
       { time: '06:00 AM', name: 'Power Crossfit', capacity: '18/20 Enrolled', trainer: 'John Carter' },
       { time: '09:00 AM', name: 'Zumba Cardio', capacity: '12/15 Enrolled', trainer: 'Sarah Miller' },
       { time: '05:30 PM', name: 'Strength Hypertrophy', capacity: '24/25 Enrolled', trainer: 'Dave Batista' },
     ];
+
+    const hasRealData = data && data.business;
+    const workoutsList = hasRealData && data.recentBookings ? data.recentBookings.map(b => ({
+      time: b.time || 'N/A',
+      name: b.type || 'Workout Class',
+      capacity: b.customer || 'Athlete',
+      trainer: 'Staff Member'
+    })) : workoutsFallback;
 
     return (
       <div className="sub-panel animate-fade">
@@ -197,7 +266,7 @@ const DashboardHome = () => {
               <h3>Active Gym Members</h3>
               <Users className="stat-icon text-gym" />
             </div>
-            <p className="stat-value">120 Athletes</p>
+            <p className="stat-value">{hasRealData ? `${data.business.members} Athletes` : '120 Athletes'}</p>
             <span className="stat-trend text-success">↑ 8% package renewals</span>
           </div>
 
@@ -206,7 +275,7 @@ const DashboardHome = () => {
               <h3>Gate Check-ins Today</h3>
               <Activity className="stat-icon text-gym" />
             </div>
-            <p className="stat-value">74 Attended</p>
+            <p className="stat-value">{hasRealData ? `${data.recentBookings?.length || 0} Attended` : '74 Attended'}</p>
             <span className="stat-trend text-success">Peak: 6:00 - 8:00 AM</span>
           </div>
 
@@ -215,7 +284,7 @@ const DashboardHome = () => {
               <h3>Monthly Collections</h3>
               <DollarSign className="stat-icon text-gym" />
             </div>
-            <p className="stat-value">NPR 50,000</p>
+            <p className="stat-value">{hasRealData ? `NPR ${data.business.revenue.toLocaleString()}` : 'NPR 50,000'}</p>
             <span className="stat-trend text-success">100% paid invoices</span>
           </div>
         </div>
@@ -231,13 +300,13 @@ const DashboardHome = () => {
               <thead>
                 <tr>
                   <th>Class Time</th>
-                  <th>Workout Session</th>
+                  <th>Workout Session / Customer</th>
                   <th>Attendance / Capacity</th>
                   <th>Assigned Trainer</th>
                 </tr>
               </thead>
               <tbody>
-                {workouts.map((w, idx) => (
+                {workoutsList.map((w, idx) => (
                   <tr key={idx}>
                     <td><strong>{w.time}</strong></td>
                     <td>{w.name}</td>
@@ -255,11 +324,20 @@ const DashboardHome = () => {
 
   // --- 3. SALON SUB-PANELS ---
   const renderSalonOverview = () => {
-    const appointments = [
+    const appointmentsFallback = [
       { customer: 'Jane Smith', stylist: 'Chloe Vane', service: 'Balayage Hair Coloring', time: '02:00 PM', status: 'Pending' },
       { customer: 'Lisa Cuddy', stylist: 'Mark Sloane', service: 'Gel Nail Polish Manicure', time: '03:30 PM', status: 'Confirmed' },
       { customer: 'Monica Geller', stylist: 'Rachel Green', service: 'Facial & Skin Hydration', time: '05:00 PM', status: 'Confirmed' },
     ];
+
+    const hasRealData = data && data.business;
+    const appointmentsList = hasRealData && data.recentBookings ? data.recentBookings.map(b => ({
+      customer: b.customer || 'Client',
+      stylist: 'Stylist Member',
+      service: b.type || 'Salon Service',
+      time: b.time || 'N/A',
+      status: b.status || 'Confirmed'
+    })) : appointmentsFallback;
 
     return (
       <div className="sub-panel animate-fade">
@@ -269,7 +347,7 @@ const DashboardHome = () => {
               <h3>Today's Bookings</h3>
               <Calendar className="stat-icon text-salon" />
             </div>
-            <p className="stat-value">8 Bookings</p>
+            <p className="stat-value">{hasRealData ? `${data.recentBookings?.length || 0} Bookings` : '8 Bookings'}</p>
             <span className="stat-trend text-success">4 stylists fully occupied</span>
           </div>
 
@@ -278,7 +356,7 @@ const DashboardHome = () => {
               <h3>Stylist Occupancy</h3>
               <TrendingUp className="stat-icon text-salon" />
             </div>
-            <p className="stat-value">84% Utilized</p>
+            <p className="stat-value">{hasRealData ? `${data.recentBookings?.length > 0 ? '84%' : '0% Utilized'}` : '84% Utilized'}</p>
             <span className="stat-trend text-success">↑ 12% over last week</span>
           </div>
 
@@ -287,7 +365,7 @@ const DashboardHome = () => {
               <h3>Daily Drawer Cash</h3>
               <DollarSign className="stat-icon text-salon" />
             </div>
-            <p className="stat-value">NPR 30,000</p>
+            <p className="stat-value">{hasRealData ? `NPR ${data.business.revenue.toLocaleString()}` : 'NPR 30,000'}</p>
             <span className="stat-trend text-success">Product sales included</span>
           </div>
         </div>
@@ -310,7 +388,7 @@ const DashboardHome = () => {
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((a, idx) => (
+                {appointmentsList.map((a, idx) => (
                   <tr key={idx}>
                     <td><strong>{a.time}</strong></td>
                     <td>{a.customer}</td>
@@ -329,11 +407,20 @@ const DashboardHome = () => {
 
   // --- 4. CLINIC SUB-PANELS ---
   const renderClinicOverview = () => {
-    const queue = [
+    const queueFallback = [
       { time: '10:00 AM', patient: 'John Doe', doctor: 'Dr. Marcus Vance', type: 'Dental Consultation', status: 'Confirmed' },
       { time: '11:15 AM', patient: 'Arthur Pendragon', doctor: 'Dr. Gaius', type: 'Physiotherapy Session', status: 'In Progress' },
       { time: '01:00 PM', patient: 'Ginevra Weasley', doctor: 'Dr. Pomfrey', type: 'Annual General Checkup', status: 'Pending' },
     ];
+
+    const hasRealData = data && data.business;
+    const queueList = hasRealData && data.recentBookings ? data.recentBookings.map(b => ({
+      time: b.time || 'N/A',
+      patient: b.customer || 'Patient',
+      doctor: 'Doctor',
+      type: b.type || 'Consultation',
+      status: b.status || 'Confirmed'
+    })) : queueFallback;
 
     return (
       <div className="sub-panel animate-fade">
@@ -343,8 +430,8 @@ const DashboardHome = () => {
               <h3>Active Patient Logs</h3>
               <Users className="stat-icon text-clinic" />
             </div>
-            <p className="stat-value">450 Patients</p>
-            <span className="stat-trend text-success">100% secure record vaults</span>
+            <p className="stat-value">{hasRealData ? `${data.business.members} Patients` : '450 Patients'}</p>
+            <span className="stat-trend text-success">100% secure vault</span>
           </div>
 
           <div className="stat-card glass">
@@ -361,7 +448,7 @@ const DashboardHome = () => {
               <h3>Billing collections</h3>
               <DollarSign className="stat-icon text-clinic" />
             </div>
-            <p className="stat-value">NPR 120,000</p>
+            <p className="stat-value">{hasRealData ? `NPR ${data.business.revenue.toLocaleString()}` : 'NPR 120,000'}</p>
             <span className="stat-trend text-success">NPR 45k insurance pending</span>
           </div>
         </div>
@@ -384,7 +471,7 @@ const DashboardHome = () => {
                 </tr>
               </thead>
               <tbody>
-                {queue.map((q, idx) => (
+                {queueList.map((q, idx) => (
                   <tr key={idx}>
                     <td><strong>{q.time}</strong></td>
                     <td>{q.patient}</td>
@@ -492,6 +579,19 @@ const DashboardHome = () => {
               : `Operational dashboard for ${user?.businessName} (${businessType} hub).`
             }
           </p>
+          {!isSuperAdmin && data?.business?.slug && (
+            <div style={{ marginTop: '12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: '700', color: 'hsla(var(--text-muted))' }}>Client Booking Portal: </span>
+              <a 
+                href={`/${data.business.slug}/portal`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ color: currentAccent, textDecoration: 'underline', fontWeight: '800' }}
+              >
+                http://localhost:5173/{data.business.slug}/portal
+              </a>
+            </div>
+          )}
         </div>
         
         {/* Dynamic Multi-tenant Onboarding CTA */}

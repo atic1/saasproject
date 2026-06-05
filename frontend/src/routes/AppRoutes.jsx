@@ -26,6 +26,12 @@ import Payments from '../pages/dashboard/Payments';
 import Reports from '../pages/dashboard/Reports';
 import SettingsPage from '../pages/dashboard/Settings';
 
+// Portal pages
+import CustomerPortal from '../pages/portal/CustomerPortal';
+import PaymentSuccess from '../pages/portal/PaymentSuccess';
+import PaymentFailed from '../pages/portal/PaymentFailed';
+import PaymentPending from '../pages/portal/PaymentPending';
+
 // Protected Route Guard for general authenticated App pages
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -82,7 +88,13 @@ const AppRoutes = () => {
         {/* Sub-routing handles dynamically inside DashboardHome.jsx via tab search-params */}
       </Route>
 
-      {/* 5. WILDCARD CATCH-ALL */}
+      {/* 5. CUSTOMER PORTAL & PAYMENTS CALLBACKS */}
+      <Route path="/:slug/portal" element={<CustomerPortal />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-failed" element={<PaymentFailed />} />
+      <Route path="/payment-pending" element={<PaymentPending />} />
+
+      {/* 6. WILDCARD CATCH-ALL */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

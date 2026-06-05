@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Settings, User, Shield, Key, Sparkles, 
-  Briefcase, Save, CheckCircle2, ShieldAlert 
+  User, Shield, Briefcase, Save, CheckCircle2, ShieldAlert 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const SettingsPage = () => {
-  const { user, isSuperAdmin, businessType, updateBusinessDetails } = useAuth();
+  const { user, isSuperAdmin, businessType, updateBusinessDetails, activeBusiness } = useAuth();
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -15,11 +14,37 @@ const SettingsPage = () => {
   });
 
   const [businessData, setBusinessData] = useState({
-    businessName: user?.businessName || '',
-    subscriptionPlan: user?.subscriptionPlan || 'starter'
+    businessName: activeBusiness?.businessName || user?.businessName || '',
+    subscriptionPlan: activeBusiness?.subscription?.plan || user?.subscriptionPlan || 'starter'
   });
 
   const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    const fetchBusinessSettings = async () => {
+      const token = localStorage.getItem('saas_token');
+      const bId = activeBusiness?.businessId || user?.businessId;
+      if (!token || token.startsWith('mock-') || !bId) return;
+      try {
+        const response = await fetch('http://localhost:5000/api/businesses/current', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-Business-Id': bId
+          }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setBusinessData({
+            businessName: data.name || '',
+            subscriptionPlan: data.subscription?.plan || 'starter'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+    fetchBusinessSettings();
+  }, [user, activeBusiness]);
 
   const accentClass = isSuperAdmin ? 'admin' : businessType;
 
@@ -29,10 +54,41 @@ const SettingsPage = () => {
     showToast('Administrator profile details updated successfully!');
   };
 
-  const handleBusinessSave = (e) => {
+  const handleBusinessSave = async (e) => {
     e.preventDefault();
-    updateBusinessDetails(businessData);
-    showToast('Tenant business details updated successfully!');
+    const token = localStorage.getItem('saas_token');
+    const bId = activeBusiness?.businessId || user?.businessId;
+    if (token && !token.startsWith('mock-') && bId) {
+      try {
+        const response = await fetch('http://localhost:5000/api/businesses/current', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Business-Id': bId
+          },
+          body: JSON.stringify({
+            name: businessData.businessName
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          updateBusinessDetails({
+            businessName: data.business?.name || businessData.businessName
+          });
+          showToast('Tenant business details updated successfully!');
+        } else {
+          const data = await response.json();
+          alert(data.message || 'Failed to update business');
+        }
+      } catch (err) {
+        console.error('Failed to update business:', err);
+        showToast('Network error updating business settings.');
+      }
+    } else {
+      updateBusinessDetails(businessData);
+      showToast('Tenant business details updated successfully!');
+    }
   };
 
   const showToast = (msg) => {

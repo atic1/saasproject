@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const auditLogSchema = new mongoose.Schema({
   businessId: { 
     type: String, 
@@ -36,3 +38,5 @@ const auditLogSchema = new mongoose.Schema({
 
 auditLogSchema.index({ businessId: 1, timestamp: -1 });
 auditLogSchema.index({ businessId: 1, userId: 1, action: 1 });
+
+module.exports = mongoose.model('AuditLog', auditLogSchema);
