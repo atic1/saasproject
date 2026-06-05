@@ -190,7 +190,13 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user._id);
 
+    const primaryMembership = membershipsFormatted[0];
+
     return res.json({
+      success: true,
+      role: primaryMembership?.role === 'owner' ? 'owner' : 'staff',
+      businessId: primaryMembership?.businessId || null,
+      businessName: primaryMembership?.businessName || null,
       token,
       user: {
         id: user._id,

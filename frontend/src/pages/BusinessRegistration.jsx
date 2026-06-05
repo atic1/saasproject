@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const initialFormState = {
   // Step 1: Identity
@@ -6,6 +7,8 @@ const initialFormState = {
   type: 'gym',
   description: '',
   // Step 2: Contact
+  ownerName: '',
+  password: '',
   phone: '',
   email: '',
   address: '',
@@ -21,6 +24,7 @@ const initialFormState = {
 };
 
 const BusinessRegistration = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,17 +46,36 @@ const BusinessRegistration = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/businesses/register', {
+      const payload = {
+        name: formData.ownerName,
+        phone: formData.phone,
+        email: formData.email,
+        password: formData.password,
+        businessName: formData.name,
+        businessType: formData.type,
+        slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      };
+
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.setItem('isAuthenticated', 'true');
+        const firstMembership = data.memberships?.[0] || data.user?.memberships?.[0];
+        if (firstMembership) {
+          localStorage.setItem('businessId', firstMembership.businessId);
+          localStorage.setItem('role', firstMembership.role);
+        } else {
+          localStorage.setItem('businessId', data.user?.id || 'demo');
+          localStorage.setItem('role', 'owner');
+        }
         setIsSuccess(true);
       } else {
         alert(data.message || 'Failed to register business');
@@ -76,7 +99,7 @@ const BusinessRegistration = () => {
           <p className="text-gray-600 dark:text-gray-300">Your business "{formData.name}" has been registered successfully.</p>
           <button 
             className="mt-6 px-7 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-blue-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-none"
-            onClick={() => window.location.reload()}
+            onClick={() => navigate('/dashboard')}
           >
             Go to Dashboard
           </button>
@@ -167,6 +190,32 @@ const BusinessRegistration = () => {
         {/* Step 2: Contact */}
         {currentStep === 2 && (
           <div className="transition-opacity duration-500 opacity-100">
+            <div className="flex flex-col md:flex-row gap-5 mb-6">
+              <div className="flex-1">
+                <label className="block font-medium mb-2 text-gray-800 dark:text-gray-200 text-sm">Owner Full Name</label>
+                <input 
+                  type="text" 
+                  name="ownerName" 
+                  className="w-full px-4 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-base transition-all duration-300 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20" 
+                  placeholder="Alex Rivera"
+                  value={formData.ownerName}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block font-medium mb-2 text-gray-800 dark:text-gray-200 text-sm">Password</label>
+                <input 
+                  type="password" 
+                  name="password" 
+                  className="w-full px-4 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-base transition-all duration-300 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20" 
+                  placeholder="Minimum 8 characters"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
             <div className="flex flex-col md:flex-row gap-5 mb-6">
               <div className="flex-1">
                 <label className="block font-medium mb-2 text-gray-800 dark:text-gray-200 text-sm">Phone Number</label>

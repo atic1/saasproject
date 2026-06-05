@@ -14,6 +14,9 @@ import SuperAdminBusinessesPage from './pages/SuperAdminBusinessesPage';
 import SuperAdminNotificationsPage from './pages/SuperAdminNotificationsPage';
 import SuperAdminSettingsPage from './pages/SuperAdminSettingsPage';
 
+// Apply dark mode globally so Tailwind dark: variants work
+document.documentElement.classList.add('dark');
+
 // Redirect /dashboard based on stored role
 function DashboardRedirect() {
   const role = localStorage.getItem('role');
@@ -62,13 +65,13 @@ function App() {
 
 function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-center px-4 pt-16">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-center px-4 pt-16">
       <div className="text-8xl mb-6">🏔️</div>
-      <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3">
+      <h1 className="text-4xl font-black text-white mb-3">
         404 – Page Not Found
       </h1>
-      <p className="text-gray-500 dark:text-gray-400 mb-8">
-        This page got lost in the visit again.
+      <p className="text-gray-400 mb-8">
+        This page got lost in the mountains.
       </p>
       <a
         href="/"

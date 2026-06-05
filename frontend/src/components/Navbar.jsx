@@ -10,10 +10,6 @@ const Navbar = () => {
   const location = useLocation();
   const searchRef = useRef(null);
 
-  if (location.pathname.startsWith('/superadmin')) {
-    return null;
-  }
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -23,6 +19,10 @@ const Navbar = () => {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  if (location.pathname.startsWith('/superadmin') || location.pathname.startsWith('/admin')) {
+    return null;
+  }
 
   const handleSearch = (e) => {
     e.preventDefault();

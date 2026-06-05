@@ -10,6 +10,7 @@ const PlansManagement = () => {
   const [plans, setPlans] = useState([]);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusError, setStatusError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [newPlan, setNewPlan] = useState({
@@ -31,31 +32,7 @@ const PlansManagement = () => {
       const status = businessData?.business?.status;
 
       if (status && status !== 'active') {
-        const statusConfigs = {
-          pending:              { icon: Shield,        iconBg: 'bg-amber-100 dark:bg-amber-500/10', iconColor: 'text-amber-500',  title: 'Awaiting Approval',       description: 'Your business registration is currently under review. Plans & Offers will be available once approved.', badge: 'Pending Review',  badgeBg: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
-          pending_verification: { icon: Shield,        iconBg: 'bg-amber-100 dark:bg-amber-500/10', iconColor: 'text-amber-500',  title: 'Awaiting Approval',       description: 'Your business registration is currently under review. Plans & Offers will be available once approved.', badge: 'Pending Review',  badgeBg: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
-          suspended:            { icon: AlertTriangle, iconBg: 'bg-orange-100 dark:bg-orange-500/10', iconColor: 'text-orange-500', title: 'Account Suspended',        description: 'Your account has been suspended. Contact support to restore access.', badge: 'Suspended',      badgeBg: 'bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30' },
-          rejected:             { icon: XCircle,       iconBg: 'bg-red-100 dark:bg-red-500/10',    iconColor: 'text-red-500',    title: 'Registration Rejected',    description: 'Your registration was rejected. Please re-apply with accurate details.', badge: 'Rejected',       badgeBg: 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30' },
-        };
-        const cfg = statusConfigs[status] || statusConfigs.pending;
-        const IconComp = cfg.icon;
-        setLockedScreen(
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-10 max-w-lg w-full text-center shadow-2xl relative z-10">
-              <div className={`w-20 h-20 ${cfg.iconBg} rounded-full flex items-center justify-center mx-auto mb-6`}>
-                <IconComp className={cfg.iconColor} size={38} />
-              </div>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border mb-4 ${cfg.badgeBg}`}>{cfg.badge}</span>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-3">{cfg.title}</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-8">{cfg.description}</p>
-              <div className="space-y-3">
-                <a href="mailto:support@biznepal.com" className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold hover:from-purple-500 hover:to-blue-400 transition-all hover:-translate-y-0.5 shadow-lg shadow-purple-500/25">Contact Support</a>
-                <Link to="/" className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">Go Home</Link>
-              </div>
-            </div>
-          </div>
-        );
+        setStatusError(status);
         setLoading(false);
         return;
       }
@@ -91,6 +68,36 @@ const PlansManagement = () => {
       console.error(error);
     }
   };
+
+  // Status lock screen config (rendered from state, not stored as JSX)
+  const statusConfigs = {
+    pending:              { icon: Shield,        iconBg: 'bg-amber-100 dark:bg-amber-500/10',  iconColor: 'text-amber-500',  title: 'Awaiting Approval',     description: 'Your business registration is under review. Plans & Offers will be available once approved.', badge: 'Pending Review', badgeBg: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
+    pending_verification: { icon: Shield,        iconBg: 'bg-amber-100 dark:bg-amber-500/10',  iconColor: 'text-amber-500',  title: 'Awaiting Approval',     description: 'Your business registration is under review. Plans & Offers will be available once approved.', badge: 'Pending Review', badgeBg: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
+    suspended:            { icon: AlertTriangle, iconBg: 'bg-orange-100 dark:bg-orange-500/10', iconColor: 'text-orange-500', title: 'Account Suspended',     description: 'Your account has been suspended. Contact support to restore access.', badge: 'Suspended',      badgeBg: 'bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30' },
+    rejected:             { icon: XCircle,       iconBg: 'bg-red-100 dark:bg-red-500/10',     iconColor: 'text-red-500',    title: 'Registration Rejected', description: 'Your registration was rejected. Please re-apply with accurate details.', badge: 'Rejected',       badgeBg: 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30' },
+  };
+
+  if (statusError) {
+    const cfg = statusConfigs[statusError] || statusConfigs.pending;
+    const IconComp = cfg.icon;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-10 max-w-lg w-full text-center shadow-2xl relative z-10">
+          <div className={`w-20 h-20 ${cfg.iconBg} rounded-full flex items-center justify-center mx-auto mb-6`}>
+            <IconComp className={cfg.iconColor} size={38} />
+          </div>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border mb-4 ${cfg.badgeBg}`}>{cfg.badge}</span>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-3">{cfg.title}</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-8">{cfg.description}</p>
+          <div className="space-y-3">
+            <a href="mailto:support@biznepal.com" className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold hover:from-purple-500 hover:to-blue-400 transition-all hover:-translate-y-0.5 shadow-lg shadow-purple-500/25">Contact Support</a>
+            <Link to="/" className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">Go Home</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
