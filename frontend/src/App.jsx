@@ -1,27 +1,59 @@
-
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import BusinessRegistration from './pages/BusinessRegistration';
-import SuperadminDashboard from './pages/SuperadminDashboard';
 import BusinessDashboard from './pages/BusinessDashboard';
 import PlansManagement from './pages/PlansManagement';
 import Login from './pages/Login';
+
+// Super Admin workspace
+import SuperAdminLayout from './components/SuperAdminLayout';
+import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
+import SuperAdminPendingPage from './pages/SuperAdminPendingPage';
+import SuperAdminBusinessesPage from './pages/SuperAdminBusinessesPage';
+import SuperAdminNotificationsPage from './pages/SuperAdminNotificationsPage';
+import SuperAdminSettingsPage from './pages/SuperAdminSettingsPage';
+
+// Redirect /dashboard based on stored role
+function DashboardRedirect() {
+  const role = localStorage.getItem('role');
+  const isAuth = localStorage.getItem('isAuthenticated');
+  const businessId = localStorage.getItem('businessId');
+
+  if (!isAuth) return <Navigate to="/login" replace />;
+  if (role === 'super_admin') return <Navigate to="/superadmin/dashboard" replace />;
+  if (businessId) return <Navigate to={`/admin/${businessId}`} replace />;
+  return <Navigate to="/login" replace />;
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
-
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<BusinessRegistration />} />
-        <Route path="/dashboard" element={<SuperadminDashboard />} />
+
+        {/* Smart dashboard redirect */}
+        <Route path="/dashboard" element={<DashboardRedirect />} />
+
+        {/* Business Owner routes */}
         <Route path="/admin/:businessId" element={<BusinessDashboard />} />
         <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
 
-        {/* Fallback route */}
+        {/* Super Admin workspace (nested layout) */}
+        <Route path="/superadmin" element={<SuperAdminLayout />}>
+          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
+          <Route path="dashboard"     element={<SuperAdminDashboardPage />} />
+          <Route path="pending"       element={<SuperAdminPendingPage />} />
+          <Route path="businesses"    element={<SuperAdminBusinessesPage />} />
+          <Route path="notifications" element={<SuperAdminNotificationsPage />} />
+          <Route path="settings"      element={<SuperAdminSettingsPage />} />
+        </Route>
+
+        {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
@@ -41,9 +73,7 @@ function NotFound() {
         Go Home
       </a>
     </div>
-
-  )
+  );
 }
-
 
 export default App;

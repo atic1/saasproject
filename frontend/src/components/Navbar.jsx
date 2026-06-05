@@ -10,6 +10,10 @@ const Navbar = () => {
   const location = useLocation();
   const searchRef = useRef(null);
 
+  if (location.pathname.startsWith('/superadmin')) {
+    return null;
+  }
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
