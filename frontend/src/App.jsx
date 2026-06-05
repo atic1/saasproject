@@ -1,85 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import BusinessRegistration from './pages/BusinessRegistration';
-import BusinessDashboard from './pages/BusinessDashboard';
-import PlansManagement from './pages/PlansManagement';
-import Login from './pages/Login';
+import { BrowserRouter as Router } from "react-router-dom";
 
-// Super Admin workspace
-import SuperAdminLayout from './components/SuperAdminLayout';
-import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
-import SuperAdminPendingPage from './pages/SuperAdminPendingPage';
-import SuperAdminBusinessesPage from './pages/SuperAdminBusinessesPage';
-import SuperAdminNotificationsPage from './pages/SuperAdminNotificationsPage';
-import SuperAdminSettingsPage from './pages/SuperAdminSettingsPage';
-
-// Apply dark mode globally so Tailwind dark: variants work
-document.documentElement.classList.add('dark');
-
-// Redirect /dashboard based on stored role
-function DashboardRedirect() {
-  const role = localStorage.getItem('role');
-  const isAuth = localStorage.getItem('isAuthenticated');
-  const businessId = localStorage.getItem('businessId');
-
-  if (!isAuth) return <Navigate to="/login" replace />;
-  if (role === 'super_admin') return <Navigate to="/superadmin/dashboard" replace />;
-  if (businessId) return <Navigate to={`/admin/${businessId}`} replace />;
-  return <Navigate to="/login" replace />;
-}
+import { AuthProvider } from "./context/AuthContext";
+import { BookingProvider } from "./context/BookingContext";
+import Navbar from "./components/Navbar";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<BusinessRegistration />} />
-
-        {/* Smart dashboard redirect */}
-        <Route path="/dashboard" element={<DashboardRedirect />} />
-
-        {/* Business Owner routes */}
-        <Route path="/admin/:businessId" element={<BusinessDashboard />} />
-        <Route path="/admin/:businessId/plans" element={<PlansManagement />} />
-
-        {/* Super Admin workspace (nested layout) */}
-        <Route path="/superadmin" element={<SuperAdminLayout />}>
-          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
-          <Route path="dashboard"     element={<SuperAdminDashboardPage />} />
-          <Route path="pending"       element={<SuperAdminPendingPage />} />
-          <Route path="businesses"    element={<SuperAdminBusinessesPage />} />
-          <Route path="notifications" element={<SuperAdminNotificationsPage />} />
-          <Route path="settings"      element={<SuperAdminSettingsPage />} />
-        </Route>
-
-        {/* Fallback */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-function NotFound() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-center px-4 pt-16">
-      <div className="text-8xl mb-6">🏔️</div>
-      <h1 className="text-4xl font-black text-white mb-3">
-        404 – Page Not Found
-      </h1>
-      <p className="text-gray-400 mb-8">
-        This page got lost in the mountains.
-      </p>
-      <a
-        href="/"
-        className="px-7 py-3 rounded-2xl font-bold text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 shadow-lg shadow-purple-500/30 transition-all hover:-translate-y-0.5"
-      >
-        Go Home
-      </a>
-    </div>
+    <AuthProvider>
+      <Router>
+        <BookingProvider>
+          <Navbar />
+          <AppRoutes />
+        </BookingProvider>
+      </Router>
+    </AuthProvider>
   );
 }
 

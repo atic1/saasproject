@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const Offer = require('../models/offer');
+const { protect } = require('../middleware/authMiddleware');
+const { enforceTenant } = require('../middleware/tenantIsolation');
+const { requirePermission } = require('../middleware/rbac');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 
 // Get all offers for a business
-router.get('/:businessId', async (req, res) => {
+router.get('/:businessId', protect, enforceTenant, requirePermission('offer.read'), async (req, res) => {
     try {
-        const offers = await Offer.find({ businessId: req.params.businessId });
+        if (req.params.businessId !== req.activeBusinessId) {
+            return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
+        }
+
+        const offers = await Offer.find({ businessId: req.activeBusinessId });
         res.json(offers);
     } catch (error) {
         console.error(error);
@@ -14,11 +22,15 @@ router.get('/:businessId', async (req, res) => {
 });
 
 // Create a new offer
-router.post('/:businessId', async (req, res) => {
+router.post('/:businessId', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.create'), async (req, res) => {
     try {
+        if (req.params.businessId !== req.activeBusinessId) {
+            return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
+        }
+
         const newOffer = new Offer({
             ...req.body,
-            businessId: req.params.businessId
+            businessId: req.activeBusinessId
         });
         await newOffer.save();
         res.status(201).json(newOffer);

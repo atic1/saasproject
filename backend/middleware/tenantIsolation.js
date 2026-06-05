@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const Business = require('../models/business');
 const BusinessMember = require('../models/businessMember');
 
 /**
@@ -28,21 +29,51 @@ const enforceTenant = async (req, res, next) => {
 
     // 2. Determine requested businessId
     // Prefer explicit header, fallback to query/body, then JWT payload
-    const headerBusinessId = req.headers['x-business-id'];
+    let headerBusinessId = req.headers['x-business-id'] || req.headers['x-business-slug'];
     const bodyBusinessId = req.body && req.body.businessId;
     const queryBusinessId = req.query && req.query.businessId;
     const tokenBusinessId = decoded.activeBusinessId; // optional, if stored in token
 
-    const businessId = headerBusinessId || tokenBusinessId;
+    let businessId = headerBusinessId || bodyBusinessId || queryBusinessId || tokenBusinessId;
     if (!businessId) {
       return res.status(400).json({ message: 'businessId required (X-Business-Id header or request field)' });
     }
-    
+
+    // If header passed a slug instead of an ObjectId, resolve it to _id
+    if (typeof businessId === 'string' && !/^[0-9a-fA-F]{24}$/.test(businessId)) {
+      // try to resolve business by slug
+      const biz = await Business.findOne({ slug: businessId });
+      if (!biz) {
+        return res.status(404).json({ message: 'Business not found for provided slug' });
+      }
+      businessId = biz._id.toString();
+    }
+
     // 3. Verify membership for this user & business
-    const membership = await BusinessMember.findOne({ userId: user._id, businessId })
-      .populate('businessId');
+    // If `protect` ran earlier it will have attached `req.memberships` (populated). Prefer that to avoid extra DB lookup.
+    let membership = null;
+    if (Array.isArray(req.memberships) && req.memberships.length > 0) {
+      membership = req.memberships.find(m => {
+        const b = m.businessId;
+        if (!b) return false;
+        // businessId may be stored as _id string or populated doc
+        const candidateId = b._id ? b._id.toString() : b.toString();
+        const candidateSlug = b.slug;
+        return candidateId === businessId || candidateSlug === (headerBusinessId || '');
+      });
+      // If membership found but not populated fully, populate businessId
+      if (membership && membership.businessId && membership.businessId._id) {
+        // already populated
+      } else if (membership && membership.businessId) {
+        membership = await BusinessMember.findById(membership._id).populate('businessId');
+      }
+    }
+
     if (!membership) {
-      return res.status(403).json({ message: 'User does not have access to this business' });
+      membership = await BusinessMember.findOne({ userId: user._id, businessId }).populate('businessId');
+      if (!membership) {
+        return res.status(403).json({ message: 'User does not have access to this business' });
+      }
     }
 
     if (

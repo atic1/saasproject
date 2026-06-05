@@ -1,0 +1,294 @@
+const express = require('express');
+const router = express.Router();
+const crypto = require('crypto');
+
+const Invoice = require('../models/invoice');
+const Payment = require('../models/payment');
+const Booking = require('../models/booking');
+const Business = require('../models/business');
+const Customer = require('../models/customer');
+const { protect } = require('../middleware/authMiddleware');
+const providerRegistry = require('../services/payment/ProviderRegistry');
+
+/**
+ * @route   POST /api/payments/initiate
+ * @desc    Initiate a payment transaction for an Invoice
+ * @access  Private
+ */
+router.post('/initiate', protect, async (req, res) => {
+  try {
+    const { invoiceId, method } = req.body;
+
+    if (!invoiceId || !method) {
+      return res.status(400).json({ message: 'invoiceId and payment method are required.' });
+    }
+
+    const invoice = await Invoice.findById(invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found.' });
+    }
+
+    if (invoice.status === 'paid') {
+      return res.status(400).json({ message: 'Invoice is already paid.' });
+    }
+
+    const business = await Business.findById(invoice.businessId);
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found.' });
+    }
+
+    const customer = await Customer.findById(invoice.customerId);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found.' });
+    }
+
+    const operatorMembership = req.memberships.find(
+      m => m.businessId?._id?.toString() === invoice.businessId.toString()
+    );
+
+    if (req.user.platformrole !== 'super_admin' && !operatorMembership) {
+      if (!customer.userId || customer.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Access denied: You do not own this invoice.' });
+      }
+    }
+
+    const transactionUuid = `tx-${crypto.randomBytes(8).toString('hex')}-${Date.now()}`;
+
+    // Create Payment record in DB
+    const payment = new Payment({
+      businessId: invoice.businessId,
+      transactionId: transactionUuid, // generate temporary unique transaction ID
+      transaction_uuid: transactionUuid,
+      invoiceId: invoice._id,
+      customerId: invoice.customerId,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      type: invoice.bookingId ? 'booking' : 'service',
+      referenceId: invoice.bookingId,
+      referenceType: invoice.bookingId ? 'Booking' : undefined,
+      description: `Payment for Invoice #${invoice.invoiceNumber}`,
+      amount: {
+        subtotal: invoice.amount,
+        tax: invoice.tax,
+        discount: invoice.discount,
+        total: invoice.total,
+        currency: 'NPR'
+      },
+      method: method,
+      provider: method === 'cash' ? 'cash' : method,
+      status: method === 'cash' ? 'completed' : 'pending',
+      collectedBy: req.user._id
+    });
+
+    if (method === 'cash') {
+      // Direct Cash Flow (completed immediately)
+      payment.completedAt = new Date();
+      await payment.save();
+
+      // Update invoice status
+      invoice.status = 'paid';
+      invoice.paidAt = new Date();
+      invoice.paymentMethod = 'cash';
+      await invoice.save();
+
+      // Update booking status if linked
+      if (invoice.bookingId) {
+        const booking = await Booking.findById(invoice.bookingId);
+        if (booking) {
+          booking.status = 'confirmed';
+          booking.payment = {
+            amount: invoice.total,
+            status: 'paid',
+            method: 'cash',
+            transactionId: transactionUuid,
+            paidAt: new Date()
+          };
+          await booking.save();
+        }
+      }
+
+      return res.status(201).json({
+        message: 'Payment completed via Cash.',
+        payment,
+        type: 'cash'
+      });
+    }
+
+    // Provider Flow (eSewa or Mock)
+    await payment.save();
+
+    const provider = providerRegistry.resolve(method);
+    const checkoutData = await provider.initiatePayment({ payment, invoice, business });
+
+    res.status(200).json({
+      message: 'Payment initiated.',
+      payment,
+      checkout: checkoutData
+    });
+
+  } catch (error) {
+    console.error('Payment initiation error:', error);
+    res.status(500).json({ message: 'Failed to initiate payment.', error: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/payments/callback/esewa/success
+ * @desc    eSewa success callback redirection endpoint
+ * @access  Public
+ */
+router.get('/callback/esewa/success', async (req, res) => {
+  try {
+    const esewa = providerRegistry.resolve('esewa');
+    
+    // Validate signature and parse callback payload
+    const result = await esewa.handleCallback(req);
+
+    const payment = await Payment.findOne({ transaction_uuid: result.transaction_uuid });
+    if (!payment) {
+      return res.status(404).send('Payment record not found.');
+    }
+
+    if (payment.status === 'completed') {
+      return res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);
+    }
+
+    // Enforce Tenant Isolation verification
+    if (payment.amount.total !== result.amount) {
+      return res.status(400).send('Payment amount mismatch.');
+    }
+
+    // Verify status with eSewa API (Server-to-Server)
+    const verification = await esewa.verifyPayment({ payment, callbackData: result.callbackData });
+
+    payment.status = verification.status;
+    payment.provider_status = result.status;
+    payment.callback_data = result.callbackData;
+    payment.verified_at = new Date();
+
+    if (verification.status === 'completed') {
+      payment.transactionId = result.transactionId;
+      payment.completedAt = new Date();
+      await payment.save();
+
+      // Update Invoice
+      const invoice = await Invoice.findById(payment.invoiceId);
+      if (invoice) {
+        invoice.status = 'paid';
+        invoice.paidAt = new Date();
+        invoice.paymentMethod = 'esewa';
+        await invoice.save();
+
+        // Update Booking
+        if (invoice.bookingId) {
+          const booking = await Booking.findById(invoice.bookingId);
+          if (booking) {
+            booking.status = 'confirmed';
+            booking.payment = {
+              amount: invoice.total,
+              status: 'paid',
+              method: 'esewa',
+              transactionId: result.transactionId,
+              paidAt: new Date()
+            };
+            await booking.save();
+          }
+        }
+      }
+      
+      res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);
+    } else if (verification.status === 'pending_verification') {
+      await payment.save();
+      res.redirect(`http://localhost:5173/payment-pending?uuid=${result.transaction_uuid}`);
+    } else {
+      payment.status = 'failed';
+      await payment.save();
+      res.redirect(`http://localhost:5173/payment-failed?uuid=${result.transaction_uuid}`);
+    }
+
+  } catch (error) {
+    console.error('eSewa Success Callback Error:', error.message);
+    res.status(400).send(`eSewa callback verification error: ${error.message}`);
+  }
+});
+
+/**
+ * @route   GET /api/payments/callback/esewa/failure
+ * @desc    eSewa failure callback redirection endpoint
+ * @access  Public
+ */
+router.get('/callback/esewa/failure', async (req, res) => {
+  try {
+    const { pid } = req.query; // eSewa may pass order ID/UUID as query parameter
+    if (pid) {
+      const payment = await Payment.findOne({ transaction_uuid: pid });
+      if (payment) {
+        payment.status = 'failed';
+        await payment.save();
+      }
+    }
+    res.redirect(`http://localhost:5173/payment-failed`);
+  } catch (error) {
+    console.error('eSewa Failure Callback Error:', error);
+    res.redirect(`http://localhost:5173/payment-failed`);
+  }
+});
+
+/**
+ * @route   GET /api/payments/callback/mock
+ * @desc    Mock callback redirection for sandbox testing
+ * @access  Public
+ */
+router.get('/callback/mock', async (req, res) => {
+  try {
+    const mock = providerRegistry.resolve('mock');
+    const result = await mock.handleCallback(req);
+
+    const payment = await Payment.findOne({ transaction_uuid: result.transaction_uuid });
+    if (!payment) {
+      return res.status(404).send('Payment record not found.');
+    }
+
+    if (payment.status === 'completed') {
+      return res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);
+    }
+
+    payment.status = result.status;
+    payment.transactionId = result.transactionId;
+    payment.completedAt = new Date();
+    payment.callback_data = result.callbackData;
+    payment.verified_at = new Date();
+    await payment.save();
+
+    const invoice = await Invoice.findById(payment.invoiceId);
+    if (invoice) {
+      invoice.status = 'paid';
+      invoice.paidAt = new Date();
+      invoice.paymentMethod = 'mock';
+      await invoice.save();
+
+      if (invoice.bookingId) {
+        const booking = await Booking.findById(invoice.bookingId);
+        if (booking) {
+          booking.status = 'confirmed';
+          booking.payment = {
+            amount: invoice.total,
+            status: 'paid',
+            method: 'mock',
+            transactionId: result.transactionId,
+            paidAt: new Date()
+          };
+          await booking.save();
+        }
+      }
+    }
+
+    res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);
+
+  } catch (error) {
+    console.error('Mock Callback Error:', error);
+    res.status(400).send(`Mock callback error: ${error.message}`);
+  }
+});
+
+module.exports = router;

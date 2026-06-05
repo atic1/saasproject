@@ -8,6 +8,12 @@ const customerSchema = new mongoose.Schema({
       required: true,
       index: true
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
+      index: true
+    },
   
   // Identity
   name: { 

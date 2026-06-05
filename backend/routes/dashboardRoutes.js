@@ -47,6 +47,7 @@ router.get('/business/:businessId', async (req, res) => {
         name: business.name,
         type: business.type,
         status: business.status,
+        slug: business.slug || business.name.toLowerCase().replace(/\s+/g, '-'),
         members: totalMembers,
         revenue: totalRevenue
       },

@@ -32,6 +32,10 @@ router.post('/register', async (req, res) => {
       slug
     } = req.body;
 
+    if (!name || !phone || !password || !businessName || !businessType) {
+      return res.status(400).json({ message: "Name, phone, password, business name, and business type are required" });
+    }
+
     const existingUser = await User.findOne({
       $or: [{ phone }, { email }]
     });
@@ -53,10 +57,17 @@ router.post('/register', async (req, res) => {
       type: businessType,
       slug: slug || businessName.toLowerCase().replace(/\s+/g, '-'),
       ownerId: user._id,
-      status: "pending_verification",
+      status: "active",
       contact: {
         phone: phone || "9800000000",
         city: "kathmandu"
+      },
+      subscription: {
+        plan: "free_trial",
+        status: "trial",
+        trialEnds: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
       }
     });
 
@@ -211,6 +222,98 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Server error",
+      error: error.message
+    });
+  }
+});
+
+//
+// 🔑 REGISTER CUSTOMER (PORTAL SIGNUP)
+//
+router.post('/customer/register', async (req, res) => {
+  try {
+    const { name, phone, email, password, businessId } = req.body;
+
+    if (!name || !phone || !password || !businessId) {
+      return res.status(400).json({ message: "Name, phone, password, and businessId are required." });
+    }
+
+    // 1. Check if global User exists
+    let user = await User.findOne({
+      $or: [{ phone }, { email: email || 'never_match_dummy' }]
+    });
+
+    if (user) {
+      // User credentials already exist. Let's see if they have a Customer record under this business
+      const Customer = require('../models/customer');
+      let customer = await Customer.findOne({ phone, businessId });
+      
+      if (customer && customer.userId) {
+        return res.status(400).json({ message: "An account with this phone number is already registered for this business." });
+      }
+      
+      // If Customer profile exists without userId, link it
+      if (customer) {
+        customer.userId = user._id;
+        if (email) customer.email = email;
+        await customer.save();
+      } else {
+        // Create new Customer profile for this business
+        await Customer.create({
+          businessId,
+          userId: user._id,
+          name,
+          phone,
+          email,
+          status: 'active'
+        });
+      }
+    } else {
+      // 2. Create global User
+      user = await User.create({
+        name,
+        phone,
+        email,
+        password,
+        platformrole: "customer"
+      });
+
+      // 3. Create or link Customer record
+      const Customer = require('../models/customer');
+      let customer = await Customer.findOne({ phone, businessId });
+      if (customer) {
+        customer.userId = user._id;
+        if (email) customer.email = email;
+        await customer.save();
+      } else {
+        await Customer.create({
+          businessId,
+          userId: user._id,
+          name,
+          phone,
+          email,
+          status: 'active'
+        });
+      }
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      message: "Customer registered successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        memberships: []
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error during customer registration",
       error: error.message
     });
   }

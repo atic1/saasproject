@@ -37,9 +37,16 @@ const PlansManagement = () => {
         return;
       }
 
+      const token = localStorage.getItem('saas_token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-Business-Id'] = businessId;
+      }
+
       const [plansRes, offersRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/plans/${businessId}`),
-        fetch(`http://localhost:5000/api/offers/${businessId}`)
+        fetch(`http://localhost:5000/api/plans/${businessId}`, { headers }),
+        fetch(`http://localhost:5000/api/offers/${businessId}`, { headers })
       ]);
       const plansData = await plansRes.json();
       const offersData = await offersRes.json();
@@ -55,9 +62,16 @@ const PlansManagement = () => {
   const handleCreatePlan = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('saas_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-Business-Id'] = businessId;
+      }
+
       const res = await fetch(`http://localhost:5000/api/plans/${businessId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(newPlan)
       });
       if (res.ok) {
