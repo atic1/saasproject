@@ -7,6 +7,16 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
+        // Superadmin credentials check
+        if (username === 'superadmin' && password === 'superadmin123') {
+            return res.json({
+                success: true,
+                role: 'super_admin',
+                businessId: 'superadmin',
+                businessName: 'BizNepal Super Admin'
+            });
+        }
+
         // Hardcoded demo logic as requested
         if (username === 'admin' && password === 'admin123') {
             

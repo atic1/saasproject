@@ -18,6 +18,7 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/plans', require('./routes/planRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/superadmin', require('./routes/superadminRoutes'));
 
 app.get("/", (req, res) => {
     res.send("Server running...");

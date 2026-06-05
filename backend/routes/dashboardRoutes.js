@@ -87,7 +87,8 @@ router.get('/business/:businessId', async (req, res) => {
                 name: business.name,
                 type: business.type,
                 members: totalMembers,
-                revenue: totalRevenue
+                revenue: totalRevenue,
+                status: business.status
             },
             recentBookings: mappedBookings
         });

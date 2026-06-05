@@ -209,8 +209,8 @@ const businessSchema = new mongoose.Schema({
   // Status
   status: { 
     type: String, 
-    enum: ['active', 'suspended', 'deleted', 'pending_verification'],
-    default: 'pending_verification'
+    enum: ['active', 'suspended', 'deleted', 'pending_verification', 'rejected', 'pending'],
+    default: 'pending'
   },
   
   // Timestamps
