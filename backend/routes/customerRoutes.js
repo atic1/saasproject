@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 
 const Customer = require('../models/customer');
+const Booking = require('../models/booking');
 
 const { protect } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantIsolation');
+const { requirePermission } = require('../middleware/rbac');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 
 //
 // GET ALL CUSTOMERS
@@ -13,6 +16,7 @@ router.get(
   '/',
   protect,
   enforceTenant,
+  requirePermission('customer.read'),
   async (req, res) => {
     try {
       const customers = await Customer.find({
@@ -36,6 +40,7 @@ router.get(
   '/:id',
   protect,
   enforceTenant,
+  requirePermission('customer.read'),
   async (req, res) => {
     try {
       const customer = await Customer.findOne({
@@ -60,12 +65,39 @@ router.get(
 );
 
 //
+// GET CUSTOMER BOOKINGS HISTORY
+//
+router.get(
+  '/:id/bookings',
+  protect,
+  enforceTenant,
+  requirePermission('booking.read'),
+  async (req, res) => {
+    try {
+      const bookings = await Booking.find({
+        customerId: req.params.id,
+        businessId: req.activeBusinessId
+      }).sort({ date: -1, startTime: 1 });
+
+      res.json(bookings);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: 'Server Error'
+      });
+    }
+  }
+);
+
+//
 // CREATE CUSTOMER
 //
 router.post(
   '/',
   protect,
   enforceTenant,
+  requireActiveSubscription,
+  requirePermission('customer.create'),
   async (req, res) => {
     try {
       const customer = await Customer.create({
@@ -90,6 +122,8 @@ router.put(
   '/:id',
   protect,
   enforceTenant,
+  requireActiveSubscription,
+  requirePermission('customer.update'),
   async (req, res) => {
     try {
       const customer = await Customer.findOneAndUpdate(
@@ -126,6 +160,8 @@ router.delete(
   '/:id',
   protect,
   enforceTenant,
+  requireActiveSubscription,
+  requirePermission('customer.delete'),
   async (req, res) => {
     try {
       const customer = await Customer.findOneAndDelete({

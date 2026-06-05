@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
   businessId: { 
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business',
     required: true,
     index: true 
   },

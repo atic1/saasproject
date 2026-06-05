@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const checkinSchema = new mongoose.Schema({
   businessId: { 
     type: String, 
@@ -52,3 +54,5 @@ const checkinSchema = new mongoose.Schema({
 
 checkinSchema.index({ businessId: 1, timestamp: -1 });
 checkinSchema.index({ businessId: 1, customerId: 1, timestamp: -1 });
+
+module.exports = mongoose.model('Checkin', checkinSchema);

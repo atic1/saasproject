@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
   businessId: { 
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Business',
     required: true,
     index: true 
   },
@@ -12,6 +13,17 @@ const paymentSchema = new mongoose.Schema({
     type: String, 
     required: true,
     unique: true 
+  },
+  transaction_uuid: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  invoiceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Invoice',
+    required: false,
+    index: true
   },
   
   // Who paid
@@ -51,10 +63,19 @@ const paymentSchema = new mongoose.Schema({
   // Payment method
   method: { 
     type: String, 
-    enum: ['esewa', 'khalti', 'fonepay', 'cash', 'bank_transfer', 'card', 'wallet'],
+    enum: ['esewa', 'khalti', 'fonepay', 'cash', 'bank_transfer', 'card', 'wallet', 'mock'],
     required: true 
   },
   gatewayResponse: mongoose.Schema.Types.Mixed,  // Raw response from gateway
+  provider: {
+    type: String,
+    enum: ['esewa', 'khalti', 'fonepay', 'cash', 'mock'],
+    default: 'mock'
+  },
+  signature: String,
+  provider_status: String,
+  callback_data: mongoose.Schema.Types.Mixed,
+  verified_at: Date,
   
   // Status
   status: { 

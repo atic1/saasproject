@@ -6,11 +6,13 @@ const Notification = require('../models/notification');
 const createNotification = async (req, res) => {
     try {
         const {
-            businessId, recipientType, recipientId, recipientPhone, recipientEmail,
+            recipientType, recipientId, recipientPhone, recipientEmail,
             type, title, message, template, channel, referenceType, referenceId
         } = req.body;
 
-        if (!businessId || !recipientType || !type || !channel) {
+        const businessId = req.activeBusinessId;
+
+        if (!recipientType || !type || !channel) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
@@ -46,8 +48,12 @@ const getBusinessNotifications = async (req, res) => {
         const { businessId } = req.params;
         const { status, channel, type, limit = 50 } = req.query;
 
+        if (businessId !== req.activeBusinessId) {
+            return res.status(403).json({ message: "Access denied: Tenant mismatch" });
+        }
+
         // Build filter query
-        let query = { businessId };
+        let query = { businessId: req.activeBusinessId };
         if (status) query.status = status;
         if (channel) query.channel = channel;
         if (type) query.type = type;
@@ -69,7 +75,7 @@ const getBusinessNotifications = async (req, res) => {
 const getRecipientNotifications = async (req, res) => {
     try {
         const { recipientId } = req.params;
-        const notifications = await Notification.find({ recipientId })
+        const notifications = await Notification.find({ recipientId, businessId: req.activeBusinessId })
             .sort({ createdAt: -1 });
 
         res.status(200).json(notifications);
@@ -99,8 +105,8 @@ const updateNotificationStatus = async (req, res) => {
         if (status === 'read') updateData.readAt = Date.now();
         if (status === 'failed' && errorMessage) updateData.errorMessage = errorMessage;
 
-        const notification = await Notification.findByIdAndUpdate(
-            req.params.id,
+        const notification = await Notification.findOneAndUpdate(
+            { _id: req.params.id, businessId: req.activeBusinessId },
             updateData,
             { new: true, runValidators: true }
         );
@@ -121,7 +127,10 @@ const updateNotificationStatus = async (req, res) => {
 // @access  Private
 const deleteNotification = async (req, res) => {
     try {
-        const notification = await Notification.findByIdAndDelete(req.params.id);
+        const notification = await Notification.findOneAndDelete({
+            _id: req.params.id,
+            businessId: req.activeBusinessId
+        });
 
         if (!notification) {
             return res.status(404).json({ message: "Notification not found" });

@@ -43,7 +43,11 @@ module.exports = { protect };
 
 const requireBusinessRole = (roles) => {
   return async (req, res, next) => {
-    const { businessId } = req.body || req.query;
+    const businessId =
+      req.activeBusinessId ||
+      req.body?.businessId ||
+      req.query?.businessId ||
+      req.headers['x-business-id'];
 
     if (!businessId) {
       return res.status(400).json({ message: 'businessId required' });
@@ -62,6 +66,8 @@ const requireBusinessRole = (roles) => {
     }
 
     req.business = membership.businessId;
+    req.activeBusiness = membership.businessId;
+    req.activeBusinessId = membership.businessId._id.toString();
     req.role = membership.role;
     req.membership = membership;
 

@@ -135,6 +135,7 @@ router.get('/business', protect, enforceTenant, async (req, res) => {
         id: business._id,
         name: business.name,
         type: business.type,
+        slug: business.slug || business.name.toLowerCase().replace(/\s+/g, '-'),
         members: totalMembers,
         revenue: totalRevenue
       },

@@ -1,16 +1,55 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  CreditCard, Plus, ArrowUpRight, DollarSign, 
-  CheckCircle2, Download, AlertCircle, FileText 
+  Plus, Download, FileText 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Payments = () => {
-  const { businessType, isSuperAdmin } = useAuth();
+  const { businessType, businessId, isSuperAdmin } = useAuth();
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [transactionError, setTransactionError] = useState(null);
   
   const accentClass = isSuperAdmin ? 'admin' : businessType;
 
-  // --- Dynamic Financial Bills based on businessType ---
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      const loadInvoices = async () => {
+        if (!businessId) {
+          setTransactions([]);
+          setLoadingTransactions(false);
+          return;
+        }
+
+        setLoadingTransactions(true);
+        setTransactionError(null);
+
+        try {
+          const token = localStorage.getItem('saas_token');
+          const response = await fetch('http://localhost:5000/api/invoices', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-Business-Id': businessId
+            }
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'Unable to load invoices');
+          }
+          setTransactions(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error('Invoice load failed:', err.message);
+          setTransactionError(err.message || 'Failed to load invoices');
+          setTransactions([]);
+        } finally {
+          setLoadingTransactions(false);
+        }
+      };
+
+      loadInvoices();
+    }
+  }, [businessId, isSuperAdmin]);
+
   const getPaymentsData = () => {
     if (isSuperAdmin) {
       return [
@@ -44,7 +83,7 @@ const Payments = () => {
     }
   };
 
-  const transactions = getPaymentsData();
+  const paymentsData = isSuperAdmin ? getPaymentsData() : transactions;
 
   const getHeaders = () => {
     if (isSuperAdmin) return { title: 'Global SaaS Subscriptions', desc: 'Monitor multi-tenant platform payments, webhook ledgers, and stripe payouts.' };
@@ -90,89 +129,65 @@ const Payments = () => {
                   <th>Transaction Hour</th>
                   <th>Invoice Status</th>
                 </tr>
-              ) : businessType === 'gym' ? (
-                <tr>
-                  <th>Athlete Name</th>
-                  <th>Gym Package Type</th>
-                  <th>Fee Cost</th>
-                  <th>Fonepay/eSewa Gateway</th>
-                  <th>Payment Hour</th>
-                  <th>Invoice Status</th>
-                </tr>
-              ) : businessType === 'salon' ? (
-                <tr>
-                  <th>Client Customer</th>
-                  <th>Service Stylist</th>
-                  <th>Total Cost</th>
-                  <th>Sales Tax Split (13%)</th>
-                  <th>POS Hour</th>
-                  <th>POS Status</th>
-                </tr>
               ) : (
                 <tr>
-                  <th>Patient Name</th>
-                  <th>Medical Procedure</th>
-                  <th>Total Billing</th>
-                  <th>Insurer Co-pay Ratio</th>
-                  <th>Filing Hour</th>
-                  <th>Claim Status</th>
+                  <th>Invoice #</th>
+                  <th>Customer</th>
+                  <th>Total Amount</th>
+                  <th>Payment Method</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
                 </tr>
               )}
             </thead>
             <tbody>
-              {transactions.map(t => (
-                <tr key={t.id}>
-                  {isSuperAdmin ? (
-                    <>
-                      <td><strong>{t.tenant}</strong></td>
-                      <td>{t.plan}</td>
-                      <td>NPR {t.price.toLocaleString()}</td>
-                      <td>{t.gateway}</td>
-                      <td>{t.date}</td>
-                      <td><span className="badge active">{t.status}</span></td>
-                    </>
-                  ) : businessType === 'gym' ? (
-                    <>
-                      <td><strong>{t.athlete}</strong></td>
-                      <td>{t.pack}</td>
-                      <td>NPR {t.amount.toLocaleString()}</td>
-                      <td>{t.method}</td>
-                      <td>{t.date}</td>
-                      <td>
-                        <span className={`badge ${t.status === 'Paid' ? 'active' : 'pending'}`}>
-                          {t.status}
-                        </span>
-                      </td>
-                    </>
-                  ) : businessType === 'salon' ? (
-                    <>
-                      <td><strong>{t.customer}</strong></td>
-                      <td>{t.stylist}</td>
-                      <td>NPR {t.bill.toLocaleString()}</td>
-                      <td>NPR {t.tax.toLocaleString()}</td>
-                      <td>{t.date}</td>
-                      <td>
-                        <span className={`badge ${t.status === 'Completed' ? 'active' : 'pending'}`}>
-                          {t.status}
-                        </span>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td><strong>{t.patient}</strong></td>
-                      <td>{t.claim}</td>
-                      <td>NPR {t.amount.toLocaleString()}</td>
-                      <td>{t.copay}</td>
-                      <td>{t.date}</td>
-                      <td>
-                        <span className={`badge ${t.status === 'Claim Settled' || t.status === 'Settled' ? 'active' : 'inprogress'}`}>
-                          {t.status}
-                        </span>
-                      </td>
-                    </>
-                  )}
+              {(!isSuperAdmin && loadingTransactions) ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-sm text-gray-500">
+                    Loading invoices...
+                  </td>
                 </tr>
-              ))}
+              ) : (!isSuperAdmin && transactionError) ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-sm text-red-500">
+                    {transactionError}
+                  </td>
+                </tr>
+              ) : (!isSuperAdmin && paymentsData.length === 0) ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-sm text-gray-500">
+                    No invoices found for this business.
+                  </td>
+                </tr>
+              ) : (
+                paymentsData.map((t) => (
+                  <tr key={isSuperAdmin ? t.id : t._id}>
+                    {isSuperAdmin ? (
+                      <>
+                        <td><strong>{t.tenant}</strong></td>
+                        <td>{t.plan}</td>
+                        <td>NPR {t.price.toLocaleString()}</td>
+                        <td>{t.gateway}</td>
+                        <td>{t.date}</td>
+                        <td><span className="badge active">{t.status}</span></td>
+                      </>
+                    ) : (
+                      <>
+                        <td><strong>{t.invoiceNumber}</strong></td>
+                        <td>{t.customerId?.name || 'Customer'}</td>
+                        <td>NPR {t.total?.toLocaleString() ?? 0}</td>
+                        <td>{t.paymentMethod || 'Pending'}</td>
+                        <td>{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '—'}</td>
+                        <td>
+                          <span className={`badge ${t.status === 'paid' ? 'active' : t.status === 'pending' ? 'pending' : 'inprogress'}`}>
+                            {t.status}
+                          </span>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
