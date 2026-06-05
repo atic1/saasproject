@@ -4,28 +4,30 @@ import {
   LayoutDashboard, Building2, Clock, Bell, Settings, LogOut,
   ChevronRight, Shield, Menu, X, AlertCircle
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const SuperAdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isSuperAdmin, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [badges, setBadges] = useState({ pending: 0, notifications: 0 });
 
-  // Security guard
-  const role = localStorage.getItem('role');
-  const isAuth = localStorage.getItem('isAuthenticated');
-
   useEffect(() => {
-    if (!isAuth || role !== 'super_admin') {
+    if (!user || !isSuperAdmin) {
       navigate('/login', { replace: true });
     }
-  }, [isAuth, role, navigate]);
+  }, [user, isSuperAdmin, navigate]);
 
   // Fetch badge counts
   useEffect(() => {
-    if (role !== 'super_admin') return;
+    if (!isSuperAdmin) return;
+    const token = localStorage.getItem('saas_token');
     fetch('http://localhost:5000/api/superadmin/notifications', {
-      headers: { 'x-user-role': 'super_admin' }
+      headers: {
+        'x-user-role': 'super_admin',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
     })
       .then(r => r.json())
       .then(data => {
@@ -34,12 +36,10 @@ const SuperAdminLayout = () => {
         setBadges({ pending, notifications: pending + unreadTickets });
       })
       .catch(() => {});
-  }, [role, location.pathname]);
+  }, [isSuperAdmin, location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('role');
-    localStorage.removeItem('businessId');
+    logout();
     navigate('/login');
   };
 
@@ -53,7 +53,7 @@ const SuperAdminLayout = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  if (!isAuth || role !== 'super_admin') {
+  if (!user || !isSuperAdmin) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -65,6 +65,7 @@ const SuperAdminLayout = () => {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-950 flex">

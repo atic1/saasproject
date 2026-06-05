@@ -96,6 +96,7 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        platformrole: user.platformrole || 'user',
         memberships: membershipsFormatted
       },
       memberships: membershipsFormatted
@@ -126,11 +127,22 @@ router.post('/login', async (req, res) => {
     // 🔐 SUPER ADMIN CHECK
     // ----------------------------
     if (loginIdentifier === 'superadmin' && password === 'superadmin123') {
+      const saToken = jwt.sign(
+        { id: 'superadmin', platformrole: 'super_admin' },
+        process.env.JWT_SECRET || 'secret123',
+        { expiresIn: '30d' }
+      );
       return res.json({
         success: true,
-        role: 'super_admin',
-        businessId: 'superadmin',
-        businessName: 'BizNepal Super Admin'
+        token: saToken,
+        user: {
+          id: 'superadmin',
+          name: 'Super Admin',
+          email: 'superadmin@biznepal.com',
+          platformrole: 'super_admin',
+          memberships: []
+        },
+        memberships: []
       });
     }
 
@@ -214,6 +226,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        platformrole: user.platformrole || 'user',
         memberships: membershipsFormatted
       },
       memberships: membershipsFormatted
