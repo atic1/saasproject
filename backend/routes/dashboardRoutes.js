@@ -1,152 +1,162 @@
 const express = require('express');
 const router = express.Router();
 
-const tenantQuery = require('../src/utils/tenantQuery');
 const Business = require('../models/business');
 const Booking = require('../models/booking');
-const User = require('../models/user');
 const Customer = require('../models/customer');
 const Payment = require('../models/payment');
 
-const { protect } = require('../middleware/authMiddleware');
-const { enforceTenant } = require('../middleware/tenantIsolation');
-
 //
 // =========================
-// SUPER ADMIN DASHBOARD
+// BUSINESS DASHBOARD (path param - used by old PlansManagement)
 // =========================
 //
-router.get('/superadmin', protect, async (req, res) => {
+router.get('/business/:businessId', async (req, res) => {
   try {
-    if (req.user.platformrole !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
+    const { businessId } = req.params;
+    const business = await Business.findById(businessId);
 
-    const businesses = await Business.find({});
-
-    const totalBusinesses = businesses.length;
-    const totalUsers = await User.countDocuments({});
-
-    const revenueAggregation = await Payment.aggregate([
-      { $match: { status: 'completed' } },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$amount.total" }
-        }
-      }
-    ]);
-
-    const monthlyRecurringRevenue =
-      revenueAggregation.length > 0
-        ? revenueAggregation[0].totalRevenue
-        : 0;
-
-    const businessRevenues = await Payment.aggregate([
-      { $match: { status: 'completed' } },
-      {
-        $group: {
-          _id: "$businessId",
-          totalRevenue: { $sum: "$amount.total" }
-        }
-      }
-    ]);
-
-    const revenueMap = {};
-    businessRevenues.forEach(b => {
-      revenueMap[b._id.toString()] = b.totalRevenue;
-    });
-
-    const businessesWithRealData = businesses.map(b => ({
-      id: b._id,
-      name: b.name,
-      type: b.type,
-      plan: b.subscription?.plan || 'starter',
-      status: b.status,
-      revenue: revenueMap[b._id.toString()] || 0
-    }));
-
-    res.json({
-      stats: {
-        totalBusinesses,
-        totalUsers,
-        monthlyRecurringRevenue
-      },
-      businesses: businessesWithRealData
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
-  }
-});
-
-//
-// =========================
-// BUSINESS DASHBOARD
-// =========================
-//
-router.get('/business', protect, enforceTenant, async (req, res) => {
-  try {
-    const business = await Business.findById(req.activeBusinessId);
-
-    // ✅ FIX: required safety check
     if (!business) {
       return res.status(404).json({ message: 'Business not found' });
     }
 
-    const recentBookings = await Booking.find(tenantQuery(req))
+    const recentBookings = await Booking.find({ businessId })
       .sort({ date: -1 })
       .limit(10);
 
     const mappedBookings = recentBookings.map(b => ({
       id: b._id,
-      customer: b.customerName,
-      type: b.type,
+      customer: b.customerName || 'Unknown',
+      type: b.type || 'Service',
       date: b.date ? b.date.toISOString().split('T')[0] : null,
-      time: b.startTime,
-      status: b.status
+      time: b.startTime || '',
+      status: b.status || 'pending'
     }));
 
     const revenueAgg = await Payment.aggregate([
-      {
-        $match: {
-          businessId: req.activeBusinessId,
-          status: "completed"
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$amount.total" }
-        }
-      }
+      { $match: { businessId: business._id, status: 'completed' } },
+      { $group: { _id: null, totalRevenue: { $sum: '$amount.total' } } }
     ]);
+    const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
 
-    const totalRevenue =
-      revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
-
-    const totalMembers = await Customer.countDocuments({
-      businessId: req.activeBusinessId
-    });
+    const totalMembers = await Customer.countDocuments({ businessId });
 
     res.json({
       business: {
         id: business._id,
         name: business.name,
         type: business.type,
+        status: business.status,
         slug: business.slug || business.name.toLowerCase().replace(/\s+/g, '-'),
         members: totalMembers,
         revenue: totalRevenue
       },
-      role: req.role,
       recentBookings: mappedBookings
     });
-
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Business dashboard error:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
-module.exports = router;
+//
+// =========================
+// BUSINESS DASHBOARD (header-based - used by new DashboardHome.jsx)
+// GET /api/dashboard/business  with  X-Business-Id header
+// =========================
+//
+router.get('/business', async (req, res) => {
+  try {
+    const businessId = req.headers['x-business-id'];
+    if (!businessId) {
+      return res.status(400).json({ message: 'X-Business-Id header required' });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    const recentBookings = await Booking.find({ businessId })
+      .sort({ date: -1 })
+      .limit(10);
+
+    const mappedBookings = recentBookings.map(b => ({
+      id: b._id,
+      customer: b.customerName || 'Unknown',
+      type: b.type || 'Service',
+      date: b.date ? b.date.toISOString().split('T')[0] : null,
+      time: b.startTime || '',
+      status: b.status || 'pending'
+    }));
+
+    const revenueAgg = await Payment.aggregate([
+      { $match: { businessId: business._id, status: 'completed' } },
+      { $group: { _id: null, totalRevenue: { $sum: '$amount.total' } } }
+    ]);
+    const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
+    const totalMembers = await Customer.countDocuments({ businessId });
+
+    res.json({
+      business: {
+        id: business._id,
+        name: business.name,
+        type: business.type,
+        status: business.status,
+        slug: business.slug || business.name.toLowerCase().replace(/\s+/g, '-'),
+        members: totalMembers,
+        revenue: totalRevenue
+      },
+      recentBookings: mappedBookings
+    });
+  } catch (error) {
+    console.error('Business dashboard error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+//
+// =========================
+// SUPERADMIN DASHBOARD (used by new DashboardHome.jsx isSuperAdmin path)
+// GET /api/dashboard/superadmin
+// =========================
+//
+router.get('/superadmin', async (req, res) => {
+  try {
+    const total = await Business.countDocuments({});
+    const active = await Business.countDocuments({ status: 'active' });
+    const pending = await Business.countDocuments({ status: { $in: ['pending', 'pending_verification'] } });
+    const totalUsers = await Customer.countDocuments({});
+
+    const businesses = await Business.find({ status: 'active' })
+      .select('name type status')
+      .limit(20);
+
+    const revenueAgg = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount.total' } } }
+    ]);
+    const monthlyRecurringRevenue = revenueAgg[0]?.total || 0;
+
+    res.json({
+      stats: {
+        totalBusinesses: total,
+        active,
+        pending,
+        totalUsers,
+        monthlyRecurringRevenue
+      },
+      businesses: businesses.map(b => ({
+        id: b._id,
+        name: b.name,
+        type: b.type,
+        status: b.status
+      }))
+    });
+  } catch (error) {
+    console.error('Superadmin dashboard error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+module.exports = router;

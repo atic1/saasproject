@@ -27,8 +27,8 @@ const Login = () => {
     try {
       const loggedUser = await login(email, password);
       // Redirect based on user role
-      if (loggedUser.role === 'superadmin') {
-        navigate('/super-admin');
+      if (loggedUser.role === 'superadmin' || loggedUser.platformrole === 'super_admin') {
+        navigate('/superadmin/dashboard');
       } else {
         navigate('/app/dashboard');
       }
@@ -40,22 +40,25 @@ const Login = () => {
   };
 
   // Immediate quick-login for demo purposes
-  const handleQuickLogin = (emailAddress) => {
+  const handleQuickLogin = async (emailAddress) => {
     setLoading(true);
     setError('');
-    setTimeout(() => {
-      const loggedUser = quickLogin(emailAddress);
-      setLoading(false);
+    try {
+      const loggedUser = await quickLogin(emailAddress);
       if (loggedUser) {
-        if (loggedUser.role === 'superadmin') {
-          navigate('/super-admin');
+        if (loggedUser.role === 'superadmin' || loggedUser.platformrole === 'super_admin') {
+          navigate('/superadmin/dashboard');
         } else {
           navigate('/app/dashboard');
         }
       } else {
         setError('Preset quick login failed.');
       }
-    }, 400);
+    } catch (err) {
+      setError('Quick login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

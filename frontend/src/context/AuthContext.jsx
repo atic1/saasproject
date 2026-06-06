@@ -31,6 +31,11 @@ export const AuthProvider = ({ children }) => {
   // Apply theme class/attribute on load and theme toggle
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     localStorage.setItem('saas_theme', theme);
   }, [theme]);
 

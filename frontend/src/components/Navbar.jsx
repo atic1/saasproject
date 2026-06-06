@@ -20,6 +20,11 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  const HIDDEN_PREFIXES = ['/superadmin', '/super-admin', '/admin', '/app'];
+  if (HIDDEN_PREFIXES.some(prefix => location.pathname.startsWith(prefix))) {
+    return null;
+  }
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {

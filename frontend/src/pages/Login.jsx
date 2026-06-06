@@ -20,7 +20,7 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email: username, phone: username, password }),
       });
 
       const data = await response.json();
@@ -30,9 +30,13 @@ const Login = () => {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('businessId', data.businessId);
         localStorage.setItem('role', data.role);
-        
-        // Redirect to the business dashboard
-        navigate(`/admin/${data.businessId}`);
+
+        // Redirect based on role
+        if (data.role === 'super_admin') {
+          navigate('/superadmin/dashboard');
+        } else {
+          navigate(`/admin/${data.businessId}`);
+        }
       } else {
         setError(data.message || 'Invalid credentials');
       }

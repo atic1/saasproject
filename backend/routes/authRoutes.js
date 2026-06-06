@@ -88,7 +88,7 @@ router.post('/register', async (req, res) => {
       }
     ];
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Account created successfully",
       token,
       user: {
@@ -96,13 +96,14 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        platformrole: user.platformrole || 'user',
         memberships: membershipsFormatted
       },
       memberships: membershipsFormatted
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error",
       error: error.message
     });
@@ -122,6 +123,65 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: "Phone or email required" });
     }
 
+    // ----------------------------
+    // 🔐 SUPER ADMIN CHECK
+    // ----------------------------
+    if (loginIdentifier === 'superadmin' && password === 'superadmin123') {
+      const saToken = jwt.sign(
+        { id: 'superadmin', platformrole: 'super_admin' },
+        process.env.JWT_SECRET || 'secret123',
+        { expiresIn: '30d' }
+      );
+      return res.json({
+        success: true,
+        token: saToken,
+        user: {
+          id: 'superadmin',
+          name: 'Super Admin',
+          email: 'superadmin@biznepal.com',
+          platformrole: 'super_admin',
+          memberships: []
+        },
+        memberships: []
+      });
+    }
+
+    // ----------------------------
+    // 🔐 DEMO ADMIN CHECK
+    // ----------------------------
+    if (loginIdentifier === 'admin' && password === 'admin123') {
+
+      const demoBusiness = await Business.findOne({ slug: 'fitzone-gym' });
+
+      if (!demoBusiness) {
+        const anyBusiness = await Business.findOne({});
+
+        if (!anyBusiness) {
+          return res.status(404).json({
+            success: false,
+            message: "No businesses exist in the database. Please run seed.js first."
+          });
+        }
+
+        return res.json({
+          success: true,
+          role: 'owner',
+          businessId: anyBusiness._id,
+          businessName: anyBusiness.name
+        });
+      }
+
+      return res.json({
+        success: true,
+        role: 'owner',
+        businessId: demoBusiness._id,
+        businessName: demoBusiness.name
+      });
+    }
+
+    // ----------------------------
+    // 🔑 NORMAL LOGIN FLOW
+    // ----------------------------
     const user = await User.findOne({
       $or: [
         { phone: loginIdentifier },
@@ -153,20 +213,27 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user._id);
 
-    res.json({
+    const primaryMembership = membershipsFormatted[0];
+
+    return res.json({
+      success: true,
+      role: primaryMembership?.role === 'owner' ? 'owner' : 'staff',
+      businessId: primaryMembership?.businessId || null,
+      businessName: primaryMembership?.businessName || null,
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         phone: user.phone,
+        platformrole: user.platformrole || 'user',
         memberships: membershipsFormatted
       },
       memberships: membershipsFormatted
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error",
       error: error.message
     });

@@ -32,6 +32,14 @@ import PaymentSuccess from '../pages/portal/PaymentSuccess';
 import PaymentFailed from '../pages/portal/PaymentFailed';
 import PaymentPending from '../pages/portal/PaymentPending';
 
+// Super Admin pages
+import SuperAdminLayout from '../components/SuperAdminLayout';
+import SuperAdminDashboardPage from '../pages/SuperAdminDashboardPage';
+import SuperAdminPendingPage from '../pages/SuperAdminPendingPage';
+import SuperAdminBusinessesPage from '../pages/SuperAdminBusinessesPage';
+import SuperAdminNotificationsPage from '../pages/SuperAdminNotificationsPage';
+import SuperAdminSettingsPage from '../pages/SuperAdminSettingsPage';
+
 // Protected Route Guard for general authenticated App pages
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -49,7 +57,7 @@ const AdminProtectedRoute = ({ children }) => {
 const GuestRoute = ({ children }) => {
   const { isAuthenticated, isSuperAdmin } = useAuth();
   if (isAuthenticated) {
-    return isSuperAdmin ? <Navigate to="/super-admin" replace /> : <Navigate to="/app/dashboard" replace />;
+    return isSuperAdmin ? <Navigate to="/superadmin" replace /> : <Navigate to="/app/dashboard" replace />;
   }
   return children;
 };
@@ -83,10 +91,15 @@ const AppRoutes = () => {
       </Route>
 
       {/* 4. SUPERADMIN PLATFORM ROUTES (ADMIN PROTECTED) */}
-      <Route path="/super-admin" element={<AdminProtectedRoute><DashboardLayout /></AdminProtectedRoute>}>
-        <Route index element={<DashboardHome />} />
-        {/* Sub-routing handles dynamically inside DashboardHome.jsx via tab search-params */}
+      <Route path="/superadmin" element={<AdminProtectedRoute><SuperAdminLayout /></AdminProtectedRoute>}>
+        <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
+        <Route path="dashboard"     element={<SuperAdminDashboardPage />} />
+        <Route path="pending"       element={<SuperAdminPendingPage />} />
+        <Route path="businesses"    element={<SuperAdminBusinessesPage />} />
+        <Route path="notifications" element={<SuperAdminNotificationsPage />} />
+        <Route path="settings"      element={<SuperAdminSettingsPage />} />
       </Route>
+      <Route path="/super-admin" element={<Navigate to="/superadmin/dashboard" replace />} />
 
       {/* 5. CUSTOMER PORTAL & PAYMENTS CALLBACKS */}
       <Route path="/:slug/portal" element={<CustomerPortal />} />
