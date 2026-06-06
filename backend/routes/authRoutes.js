@@ -103,6 +103,16 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        message: `A record with this ${field} already exists.`
+      });
+    }
     return res.status(500).json({
       message: "Server error",
       error: error.message
@@ -115,18 +125,20 @@ router.post('/register', async (req, res) => {
 //
 router.post('/login', async (req, res) => {
   try {
-    const { phone, email, password } = req.body;
+    const { phone, email, username, password } = req.body;
 
-    const loginIdentifier = phone || email;
+    // Determine identifier: prioritize username, then phone, then email
+    const loginIdentifier = username || phone || email;
 
     if (!loginIdentifier) {
-      return res.status(400).json({ message: "Phone or email required" });
+      return res.status(400).json({ message: "Phone, email, or username required" });
     }
 
     // ----------------------------
     // 🔐 SUPER ADMIN CHECK
     // ----------------------------
-    if (loginIdentifier === 'superadmin' && password === 'superadmin123') {
+    // Super Admin shortcut login (username based)
+    if ((loginIdentifier === 'superadmin' || username === 'superadmin') && password === 'superadmin123') {
       const saToken = jwt.sign(
         { id: 'superadmin', platformrole: 'super_admin' },
         process.env.JWT_SECRET || 'secret123',
@@ -149,33 +161,48 @@ router.post('/login', async (req, res) => {
     // ----------------------------
     // 🔐 DEMO ADMIN CHECK
     // ----------------------------
-    if (loginIdentifier === 'admin' && password === 'admin123') {
-
+    // Demo Admin shortcut login (username based)
+    if ((loginIdentifier === 'admin' || username === 'admin') && password === 'admin123') {
       const demoBusiness = await Business.findOne({ slug: 'fitzone-gym' });
+      const anyBusiness = !demoBusiness ? await Business.findOne({}) : null;
+      const biz = demoBusiness || anyBusiness;
 
-      if (!demoBusiness) {
-        const anyBusiness = await Business.findOne({});
-
-        if (!anyBusiness) {
-          return res.status(404).json({
-            success: false,
-            message: "No businesses exist in the database. Please run seed.js first."
-          });
-        }
-
-        return res.json({
-          success: true,
-          role: 'owner',
-          businessId: anyBusiness._id,
-          businessName: anyBusiness.name
+      if (!biz) {
+        return res.status(404).json({
+          success: false,
+          message: "No businesses exist in the database. Please run seed.js first."
         });
       }
+
+      const token = jwt.sign(
+        { id: 'admin', platformrole: 'user' },
+        process.env.JWT_SECRET || 'secret123',
+        { expiresIn: '30d' }
+      );
+
+      const membershipsFormatted = [
+        {
+          businessId: biz._id.toString(),
+          businessName: biz.name,
+          businessType: biz.type,
+          role: 'owner'
+        }
+      ];
 
       return res.json({
         success: true,
         role: 'owner',
-        businessId: demoBusiness._id,
-        businessName: demoBusiness.name
+        businessId: biz._id,
+        businessName: biz.name,
+        token,
+        user: {
+          id: 'admin',
+          name: 'Demo Admin',
+          email: 'admin@saas.com',
+          platformrole: 'user',
+          memberships: membershipsFormatted
+        },
+        memberships: membershipsFormatted
       });
     }
 
@@ -325,6 +352,16 @@ router.post('/customer/register', async (req, res) => {
     });
 
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        message: `A record with this ${field} already exists.`
+      });
+    }
     res.status(500).json({
       message: "Server error during customer registration",
       error: error.message

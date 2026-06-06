@@ -210,6 +210,7 @@ const BusinessRegistration = () => {
                   name="password" 
                   className="w-full px-4 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-base transition-all duration-300 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20" 
                   placeholder="Minimum 8 characters"
+                  minLength="8"
                   value={formData.password}
                   onChange={handleInputChange}
                   required

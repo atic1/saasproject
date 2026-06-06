@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Mail, Lock, Sparkles, Loader2, Dumbbell, 
+  Mail, User, Lock, Sparkles, Loader2, Dumbbell, 
   Scissors, Stethoscope, Shield, ArrowRight 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       setError('Please fill in all credentials fields.');
       return;
     }
@@ -25,7 +25,7 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const loggedUser = await login(email, password);
+      const loggedUser = await login(usernameOrEmail, password);
       // Redirect based on user role
       if (loggedUser.role === 'superadmin' || loggedUser.platformrole === 'super_admin') {
         navigate('/superadmin/dashboard');
@@ -76,16 +76,16 @@ const Login = () => {
 
       <form onSubmit={handleLogin} className="login-form">
         <div className="form-group">
-          <label htmlFor="email">Email Address</label>
+          <label htmlFor="usernameOrEmail">Email or Username</label>
           <div className="input-wrapper">
-            <Mail size={16} className="input-icon" />
+            <User size={16} className="input-icon" />
             <input 
-              type="email" 
-              id="email" 
-              placeholder="operator@fitzone.com" 
+              type="text" 
+              id="usernameOrEmail" 
+              placeholder="Enter email or username" 
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={usernameOrEmail}
+              onChange={(e) => setUsernameOrEmail(e.target.value)}
             />
           </div>
         </div>

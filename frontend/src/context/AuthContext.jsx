@@ -188,19 +188,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (usernameOrEmail, password) => {
     try {
+      const isEmail = usernameOrEmail.includes('@');
+      const payload = { password };
+      if (isEmail) {
+        payload.email = usernameOrEmail;
+      } else {
+        payload.username = usernameOrEmail;
+      }
+
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(payload)
       });
       
       const data = await response.json();
       if (response.ok) {
         const loggedUser = {
           ...data.user,
-          avatarUrl: data.user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+          avatarUrl: data.user?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
         };
         
         if (loggedUser.platformrole === 'super_admin') {
