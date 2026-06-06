@@ -181,16 +181,21 @@ router.get('/business/:slug/availability', async (req, res) => {
       }));
     } else {
       // Fallback to Business hours in business timings
-      if (business.timings && business.timings.schedule) {
+      if (business.timings && business.timings.schedule && business.timings.schedule.length > 0) {
         const daySchedule = business.timings.schedule.find(s => s.day === dayOfWeek);
-        if (daySchedule && daySchedule.isOpen) {
-          operatingSlots = [{
-            startTime: daySchedule.open || "09:00",
-            endTime: daySchedule.close || "17:00",
-            capacity: capacity
-          }];
+        if (daySchedule) {
+          if (daySchedule.isOpen) {
+            operatingSlots = [{
+              startTime: daySchedule.open || "09:00",
+              endTime: daySchedule.close || "17:00",
+              capacity: capacity
+            }];
+          } else {
+            return res.json([]); // closed
+          }
         } else {
-          return res.json([]); // closed
+          // day not configured in schedule, fallback to default hours
+          operatingSlots = [{ startTime: "09:00", endTime: "17:00", capacity: capacity }];
         }
       } else {
         // Default default hours

@@ -191,9 +191,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (usernameOrEmail, password) => {
     try {
       const isEmail = usernameOrEmail.includes('@');
+      const isPhone = /^\d+$/.test(usernameOrEmail.trim());
       const payload = { password };
       if (isEmail) {
         payload.email = usernameOrEmail;
+      } else if (isPhone) {
+        payload.phone = usernameOrEmail.trim();
       } else {
         payload.username = usernameOrEmail;
       }
@@ -321,6 +324,15 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
+  // Allows portal customer registration to auth without page reload
+  const setAuthenticatedUser = (userData, token) => {
+    const loggedUser = { ...userData };
+    setUser(loggedUser);
+    localStorage.setItem('saas_user', JSON.stringify(loggedUser));
+    localStorage.setItem('saas_token', token);
+    // Customers have no business memberships — skip activeBusiness handling
+  };
+
   const logout = () => {
     setUser(null);
     setActiveBusiness(null);
@@ -369,6 +381,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       toggleTheme,
       updateBusinessDetails,
+      setAuthenticatedUser,
       activeBusiness,
       setActiveBusiness: handleSetActiveBusiness,
       isAuthenticated: !!user,

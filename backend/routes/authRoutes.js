@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../models/user');
 const Business = require('../models/business');
 const BusinessMember = require('../models/businessMember');
+const Service = require('../models/service');
 const jwt = require('jsonwebtoken');
 
 //
@@ -76,6 +77,92 @@ router.post('/register', async (req, res) => {
       businessId: business._id,
       role: "owner"
     });
+
+    // Auto-seed default services based on business type
+    const defaultServices = {
+      gym: [
+        {
+          name: "General Gym Pass",
+          description: "All-day access to gym floor and standard equipment.",
+          duration: 60,
+          price: 500,
+          capacity: 15,
+          type: "gym_class"
+        },
+        {
+          name: "Personal Training Session",
+          description: "1-on-1 fitness coaching with a certified trainer.",
+          duration: 60,
+          price: 1500,
+          capacity: 2,
+          type: "gym_class"
+        }
+      ],
+      salon: [
+        {
+          name: "Standard Haircut & Styling",
+          description: "Wash, customized cut, blow-dry, and styling.",
+          duration: 30,
+          price: 500,
+          capacity: 2,
+          type: "salon_service"
+        },
+        {
+          name: "Luxury Facial & Massage",
+          description: "Deep cleansing facial treatment followed by a head and neck massage.",
+          duration: 60,
+          price: 1200,
+          capacity: 1,
+          type: "salon_service"
+        }
+      ],
+      clinic: [
+        {
+          name: "General Consultation",
+          description: "General medical health checkup and medical advice.",
+          duration: 20,
+          price: 600,
+          capacity: 1,
+          type: "clinic_consultation"
+        },
+        {
+          name: "Diagnostic Blood Test",
+          description: "Comprehensive panel checkup including report review.",
+          duration: 30,
+          price: 1000,
+          capacity: 1,
+          type: "clinic_consultation"
+        }
+      ],
+      general: [
+        {
+          name: "Standard Service Consultation",
+          description: "Initial consultation session for general service booking.",
+          duration: 30,
+          price: 500,
+          capacity: 1,
+          type: "general"
+        }
+      ]
+    };
+
+    try {
+      const servicesToCreate = defaultServices[business.type] || defaultServices.general;
+      for (const s of servicesToCreate) {
+        await Service.create({
+          businessId: business._id,
+          name: s.name,
+          description: s.description,
+          duration: s.duration,
+          price: s.price,
+          capacity: s.capacity,
+          type: s.type,
+          isActive: true
+        });
+      }
+    } catch (err) {
+      console.error("Failed to seed default services during registration:", err.message);
+    }
 
     const token = generateToken(user._id);
 
