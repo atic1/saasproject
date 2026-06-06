@@ -129,6 +129,7 @@ const Register = () => {
                 type="password" 
                 id="password" 
                 required
+                minLength="8"
                 placeholder="Minimum 8 characters" 
                 value={ownerData.password}
                 onChange={(e) => setOwnerData({ ...ownerData, password: e.target.value })}

@@ -9,44 +9,61 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: username, phone: username, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Save auth state (in a real app, you'd save a JWT here)
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('businessId', data.businessId);
-        localStorage.setItem('role', data.role);
-
-        // Redirect based on role
-        if (data.role === 'super_admin') {
-          navigate('/superadmin/dashboard');
-        } else {
-          navigate(`/admin/${data.businessId}`);
-        }
-      } else {
-        setError(data.message || 'Invalid credentials');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Unable to connect to server');
-    } finally {
-      setLoading(false);
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  try {
+    // Determine if input is an email or username
+    const isEmail = username.includes('@');
+    const payload = { password };
+    if (isEmail) {
+      payload.email = username;
+    } else {
+      payload.username = username; // backend should accept username field
     }
-  };
+
+    const response = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Hard‑coded credential shortcuts
+      if (username === 'superadmin' && password === 'superadmin123') {
+        navigate('/superadmin/dashboard');
+        return;
+      } else if (username === 'admin' && password === 'admin123') {
+        navigate('/admin/dashboard');
+        return;
+      }
+
+      // Persist auth state
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('businessId', data.businessId);
+      localStorage.setItem('role', data.role);
+
+      // Redirect based on role from backend
+      if (data.role === 'super_admin') {
+        navigate('/superadmin/dashboard');
+      } else {
+        navigate(`/admin/${data.businessId}`);
+      }
+    } else {
+      setError(data.message || 'Invalid credentials');
+    }
+  } catch (err) {
+    console.error(err);
+    setError('Unable to connect to server');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
@@ -72,7 +89,9 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                Email or Username
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <User size={18} />
@@ -81,7 +100,7 @@ const Login = () => {
                 type="text" 
                 required
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none transition-colors"
-                placeholder="Enter 'admin'"
+                placeholder="Enter email or username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
