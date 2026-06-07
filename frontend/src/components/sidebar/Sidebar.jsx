@@ -52,6 +52,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { label: 'Class Attendance', path: '/app/bookings', icon: <Calendar size={20} /> },
           { label: 'Gym Trainers', path: '/app/dashboard?tab=trainers', icon: <UserCheck size={20} /> },
           { label: 'Membership Plans', path: '/app/dashboard?tab=plans', icon: <Briefcase size={20} /> },
+          { label: 'Offers & Promos', path: '/app/dashboard?tab=offers', icon: <Sparkles size={20} /> },
           { label: 'Fee Payments', path: '/app/payments', icon: <CreditCard size={20} /> },
           { label: 'Growth Reports', path: '/app/reports', icon: <BarChart3 size={20} /> },
           { label: 'Club Settings', path: '/app/settings', icon: <Settings size={20} /> },

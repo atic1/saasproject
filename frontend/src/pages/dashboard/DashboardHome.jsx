@@ -3,7 +3,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Users, Calendar, CreditCard, BarChart3, Dumbbell, Scissors, 
   Stethoscope, ShieldAlert, Sparkles, Plus, PlusCircle, ArrowUpRight, 
-  DollarSign, CheckCircle2, TrendingUp, Shield, Activity, UserCheck 
+  DollarSign, CheckCircle2, TrendingUp, Shield, Activity, UserCheck,
+  Edit, Trash2, Globe, Percent, Clock, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -65,6 +66,264 @@ const DashboardHome = () => {
 
     fetchDashboardData();
   }, [isSuperAdmin, businessId]);
+
+  // Tab Details API State
+  const [plans, setPlans] = useState([]);
+  const [trainers, setTrainers] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [tabLoading, setTabLoading] = useState(false);
+
+  // Modals & Forms State
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [planForm, setPlanForm] = useState({ name: '', price: '', durationValue: '1', durationUnit: 'month', features: '', isHighlighted: false, isActive: true });
+
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [editingOffer, setEditingOffer] = useState(null);
+  const [offerForm, setOfferForm] = useState({ name: '', description: '', code: '', discountType: 'percentage', discountValue: '', startDate: '', endDate: '', bannerImage: '', isActive: true });
+
+  const [showTrainerModal, setShowTrainerModal] = useState(false);
+  const [editingTrainer, setEditingTrainer] = useState(null);
+  const [trainerForm, setTrainerForm] = useState({ name: '', specialization: '', experience: '', photo: '' });
+
+  // Fetch logic for directories
+  const fetchPlans = async () => {
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+    try {
+      setTabLoading(true);
+      const res = await fetch(`http://localhost:5000/api/plans/${businessId}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) setPlans(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
+  const fetchTrainers = async () => {
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+    try {
+      setTabLoading(true);
+      const res = await fetch(`http://localhost:5000/api/trainers/${businessId}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) setTrainers(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
+  const fetchOffers = async () => {
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+    try {
+      setTabLoading(true);
+      const res = await fetch(`http://localhost:5000/api/offers/${businessId}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) setOffers(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    if (activeTab === 'plans') {
+      fetchPlans();
+    } else if (activeTab === 'trainers') {
+      fetchTrainers();
+    } else if (activeTab === 'offers') {
+      fetchOffers();
+    }
+  }, [activeTab, businessId]);
+
+  // CRUD Handlers
+  const handlePlanSave = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+
+    const url = editingPlan 
+      ? `http://localhost:5000/api/plans/${businessId}/${editingPlan._id}`
+      : `http://localhost:5000/api/plans/${businessId}`;
+    const method = editingPlan ? 'PUT' : 'POST';
+
+    const featuresList = planForm.features.split(',')
+      .map(f => f.trim())
+      .filter(Boolean)
+      .map(name => ({ name, included: true }));
+
+    const payload = {
+      name: planForm.name,
+      pricing: { basePrice: Number(planForm.price), currency: 'NPR' },
+      duration: { value: Number(planForm.durationValue), unit: planForm.durationUnit },
+      features: featuresList,
+      display: { isHighlighted: planForm.isHighlighted },
+      isActive: planForm.isActive
+    };
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowPlanModal(false);
+        fetchPlans();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Error saving plan');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePlanDelete = async (planId) => {
+    if (!confirm('Are you sure you want to delete this plan?')) return;
+    const token = localStorage.getItem('saas_token');
+    try {
+      const res = await fetch(`http://localhost:5000/api/plans/${businessId}/${planId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) fetchPlans();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOfferSave = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+
+    const url = editingOffer
+      ? `http://localhost:5000/api/offers/${businessId}/${editingOffer._id}`
+      : `http://localhost:5000/api/offers/${businessId}`;
+    const method = editingOffer ? 'PUT' : 'POST';
+
+    const payload = {
+      name: offerForm.name,
+      description: offerForm.description,
+      code: offerForm.code || undefined,
+      discount: { type: offerForm.discountType, value: Number(offerForm.discountValue) },
+      validity: { startDate: new Date(offerForm.startDate), endDate: new Date(offerForm.endDate) },
+      display: { bannerImage: offerForm.bannerImage },
+      isActive: offerForm.isActive,
+      status: offerForm.isActive ? 'active' : 'paused'
+    };
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowOfferModal(false);
+        fetchOffers();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Error saving offer');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOfferDelete = async (offerId) => {
+    if (!confirm('Are you sure you want to delete this offer?')) return;
+    const token = localStorage.getItem('saas_token');
+    try {
+      const res = await fetch(`http://localhost:5000/api/offers/${businessId}/${offerId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) fetchOffers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleTrainerSave = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+
+    const url = editingTrainer
+      ? `http://localhost:5000/api/trainers/${businessId}/${editingTrainer._id}`
+      : `http://localhost:5000/api/trainers/${businessId}`;
+    const method = editingTrainer ? 'PUT' : 'POST';
+
+    const payload = {
+      name: trainerForm.name,
+      specialization: trainerForm.specialization,
+      experience: trainerForm.experience,
+      photo: trainerForm.photo
+    };
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowTrainerModal(false);
+        fetchTrainers();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Error saving trainer');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleTrainerDelete = async (trainerId) => {
+    if (!confirm('Are you sure you want to delete this trainer?')) return;
+    const token = localStorage.getItem('saas_token');
+    try {
+      const res = await fetch(`http://localhost:5000/api/trainers/${businessId}/${trainerId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) fetchTrainers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleTrainerPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTrainerForm(prev => ({ ...prev, photo: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleOfferBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setOfferForm(prev => ({ ...prev, bannerImage: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   // ==========================================
   // DATA MOCKS & SUB-PANELS
@@ -488,8 +747,468 @@ const DashboardHome = () => {
     );
   };
 
+  // --- GYM TABS CUSTOM RENDERS & MODALS ---
+  const PlanModal = () => {
+    if (!showPlanModal) return null;
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content glass">
+          <div className="modal-header">
+            <h3>{editingPlan ? 'Edit Membership Plan' : 'Create Membership Plan'}</h3>
+            <button onClick={() => setShowPlanModal(false)} className="close-btn"><X size={18} /></button>
+          </div>
+          <form onSubmit={handlePlanSave} className="modal-form">
+            <div className="form-group">
+              <label>Plan Name</label>
+              <input type="text" required value={planForm.name} onChange={e => setPlanForm({...planForm, name: e.target.value})} />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Price (NPR)</label>
+                <input type="number" required value={planForm.price} onChange={e => setPlanForm({...planForm, price: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Duration Value</label>
+                <input type="number" required value={planForm.durationValue} onChange={e => setPlanForm({...planForm, durationValue: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Duration Unit</label>
+                <select value={planForm.durationUnit} onChange={e => setPlanForm({...planForm, durationUnit: e.target.value})}>
+                  <option value="day">Day(s)</option>
+                  <option value="week">Week(s)</option>
+                  <option value="month">Month(s)</option>
+                  <option value="year">Year(s)</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Features (comma separated list)</label>
+              <textarea placeholder="e.g. Free Trainer, Locker, Group Classes" value={planForm.features} onChange={e => setPlanForm({...planForm, features: e.target.value})} />
+            </div>
+            <div className="form-row" style={{ gap: '20px', margin: '10px 0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={planForm.isHighlighted} onChange={e => setPlanForm({...planForm, isHighlighted: e.target.checked})} />
+                Highlight on website (Badge)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={planForm.isActive} onChange={e => setPlanForm({...planForm, isActive: e.target.checked})} />
+                Plan is Active
+              </label>
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={() => setShowPlanModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Plan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const openEditPlan = (plan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      price: plan.pricing?.basePrice?.toString() || '',
+      durationValue: plan.duration?.value?.toString() || '1',
+      durationUnit: plan.duration?.unit || 'month',
+      features: plan.features ? plan.features.map(f => f.name).join(', ') : '',
+      isHighlighted: plan.display?.isHighlighted || false,
+      isActive: plan.isActive !== undefined ? plan.isActive : true
+    });
+    setShowPlanModal(true);
+  };
+
+  const openAddPlan = () => {
+    setEditingPlan(null);
+    setPlanForm({ name: '', price: '', durationValue: '1', durationUnit: 'month', features: '', isHighlighted: false, isActive: true });
+    setShowPlanModal(true);
+  };
+
+  const renderGymPlansTab = () => {
+    return (
+      <div className="sub-panel animate-fade">
+        <div className="card-table-wrapper glass">
+          <div className="table-header">
+            <h3>Gym Membership Plans</h3>
+            <button className="btn btn-primary" onClick={openAddPlan} style={{ backgroundColor: currentAccent }}>
+              <PlusCircle size={16} /> Add New Plan
+            </button>
+          </div>
+          {tabLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading plans...</div>
+          ) : plans.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No membership plans configured yet.</p>
+              <button className="btn btn-primary" onClick={openAddPlan} style={{ backgroundColor: currentAccent }}>Create Your First Plan</button>
+            </div>
+          ) : (
+            <div className="responsive-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Plan Name</th>
+                    <th>Billing Price</th>
+                    <th>Billing Duration</th>
+                    <th>Core Features</th>
+                    <th>Visibility Status</th>
+                    <th>Operator Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plans.map(plan => (
+                    <tr key={plan._id}>
+                      <td>
+                        <strong>{plan.name}</strong>
+                        {plan.display?.isHighlighted && <span className="table-badge badge-gym" style={{ marginLeft: '8px', padding: '2px 6px', fontSize: '10px' }}>Highlighted</span>}
+                      </td>
+                      <td>NPR {plan.pricing?.basePrice}</td>
+                      <td>{plan.duration?.value} {plan.duration?.unit}(s)</td>
+                      <td>{plan.features?.map(f => f.name).join(', ') || 'N/A'}</td>
+                      <td>
+                        <button 
+                          onClick={async () => {
+                            const token = localStorage.getItem('saas_token');
+                            await fetch(`http://localhost:5000/api/plans/${businessId}/${plan._id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+                              body: JSON.stringify({ isActive: !plan.isActive })
+                            });
+                            fetchPlans();
+                          }}
+                          className={`badge ${plan.isActive ? 'active' : 'pending'}`}
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          {plan.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={() => openEditPlan(plan)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: currentAccent }}><Edit size={16} /></button>
+                          <button onClick={() => handlePlanDelete(plan._id)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <PlanModal />
+      </div>
+    );
+  };
+
+  const OfferModal = () => {
+    if (!showOfferModal) return null;
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content glass">
+          <div className="modal-header">
+            <h3>{editingOffer ? 'Edit Special Offer' : 'Create Special Offer'}</h3>
+            <button onClick={() => setShowOfferModal(false)} className="close-btn"><X size={18} /></button>
+          </div>
+          <form onSubmit={handleOfferSave} className="modal-form">
+            <div className="form-group">
+              <label>Offer Name / Title</label>
+              <input type="text" required value={offerForm.name} onChange={e => setOfferForm({...offerForm, name: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>Description</label>
+              <textarea required value={offerForm.description} onChange={e => setOfferForm({...offerForm, description: e.target.value})} />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Promo Code (Optional)</label>
+                <input type="text" placeholder="e.g. GETFIT20" value={offerForm.code} onChange={e => setOfferForm({...offerForm, code: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Discount Type</label>
+                <select value={offerForm.discountType} onChange={e => setOfferForm({...offerForm, discountType: e.target.value})}>
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed_amount">Fixed Amount (NPR)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Discount Value</label>
+                <input type="number" required value={offerForm.discountValue} onChange={e => setOfferForm({...offerForm, discountValue: e.target.value})} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Start Date</label>
+                <input type="date" required value={offerForm.startDate} onChange={e => setOfferForm({...offerForm, startDate: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>End Date</label>
+                <input type="date" required value={offerForm.endDate} onChange={e => setOfferForm({...offerForm, endDate: e.target.value})} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Offer Banner Image</label>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                {offerForm.bannerImage ? (
+                  <img src={offerForm.bannerImage} alt="Banner Preview" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
+                ) : (
+                  <div style={{ width: '80px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Banner</div>
+                )}
+                <input type="file" accept="image/*" onChange={handleOfferBannerUpload} style={{ display: 'none' }} id="offer-banner-file" />
+                <label htmlFor="offer-banner-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
+              </div>
+              <input type="text" placeholder="Or paste Banner Image URL..." value={offerForm.bannerImage} onChange={e => setOfferForm({...offerForm, bannerImage: e.target.value})} />
+            </div>
+            <div className="form-row" style={{ gap: '20px', margin: '10px 0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={offerForm.isActive} onChange={e => setOfferForm({...offerForm, isActive: e.target.checked})} />
+                Offer is Active / Published
+              </label>
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={() => setShowOfferModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Offer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const openEditOffer = (offer) => {
+    setEditingOffer(offer);
+    setOfferForm({
+      name: offer.name,
+      description: offer.description || '',
+      code: offer.code || '',
+      discountType: offer.discount?.type || 'percentage',
+      discountValue: offer.discount?.value?.toString() || '',
+      startDate: offer.validity?.startDate ? new Date(offer.validity.startDate).toISOString().split('T')[0] : '',
+      endDate: offer.validity?.endDate ? new Date(offer.validity.endDate).toISOString().split('T')[0] : '',
+      bannerImage: offer.display?.bannerImage || '',
+      isActive: offer.isActive !== undefined ? offer.isActive : true
+    });
+    setShowOfferModal(true);
+  };
+
+  const openAddOffer = () => {
+    setEditingOffer(null);
+    setOfferForm({ name: '', description: '', code: '', discountType: 'percentage', discountValue: '', startDate: '', endDate: '', bannerImage: '', isActive: true });
+    setShowOfferModal(true);
+  };
+
+  const renderGymOffersTab = () => {
+    return (
+      <div className="sub-panel animate-fade">
+        <div className="card-table-wrapper glass">
+          <div className="table-header">
+            <h3>Gym Offers & Promotions</h3>
+            <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent }}>
+              <PlusCircle size={16} /> Create Promo Offer
+            </button>
+          </div>
+          {tabLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading offers...</div>
+          ) : offers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No active gym promo offers.</p>
+              <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent }}>Configure First Promo</button>
+            </div>
+          ) : (
+            <div className="responsive-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Offer Title</th>
+                    <th>Description</th>
+                    <th>Code / Discount</th>
+                    <th>Validity Period</th>
+                    <th>Active Status</th>
+                    <th>Operator Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {offers.map(offer => (
+                    <tr key={offer._id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {offer.display?.bannerImage && <img src={offer.display.bannerImage} alt="" style={{ width: '40px', height: '25px', objectFit: 'cover', borderRadius: '4px' }} />}
+                          <strong>{offer.name}</strong>
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{offer.description}</td>
+                      <td>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', marginRight: '6px' }}>{offer.code || 'AUTO'}</span>
+                        {offer.discount?.type === 'percentage' ? `${offer.discount.value}% OFF` : `NPR ${offer.discount?.value} OFF`}
+                      </td>
+                      <td style={{ fontSize: '11px' }}>
+                        {new Date(offer.validity?.startDate).toLocaleDateString()} - {new Date(offer.validity?.endDate).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <button 
+                          onClick={async () => {
+                            const token = localStorage.getItem('saas_token');
+                            await fetch(`http://localhost:5000/api/offers/${businessId}/${offer._id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+                              body: JSON.stringify({ isActive: !offer.isActive, status: !offer.isActive ? 'active' : 'paused' })
+                            });
+                            fetchOffers();
+                          }}
+                          className={`badge ${offer.isActive ? 'active' : 'pending'}`}
+                          style={{ border: 'none', cursor: 'pointer' }}
+                        >
+                          {offer.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={() => openEditOffer(offer)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: currentAccent }}><Edit size={16} /></button>
+                          <button onClick={() => handleOfferDelete(offer._id)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <OfferModal />
+      </div>
+    );
+  };
+
+  const TrainerModal = () => {
+    if (!showTrainerModal) return null;
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content glass">
+          <div className="modal-header">
+            <h3>{editingTrainer ? 'Edit Gym Trainer' : 'Add Gym Trainer'}</h3>
+            <button onClick={() => setShowTrainerModal(false)} className="close-btn"><X size={18} /></button>
+          </div>
+          <form onSubmit={handleTrainerSave} className="modal-form">
+            <div className="form-group">
+              <label>Trainer Full Name</label>
+              <input type="text" required value={trainerForm.name} onChange={e => setTrainerForm({...trainerForm, name: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>Specialization</label>
+              <input type="text" placeholder="e.g. Bodybuilding, Yoga, Zumba" required value={trainerForm.specialization} onChange={e => setTrainerForm({...trainerForm, specialization: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>Experience (Years / Description)</label>
+              <input type="text" placeholder="e.g. 5+ Years Experience" required value={trainerForm.experience} onChange={e => setTrainerForm({...trainerForm, experience: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>Trainer Photo</label>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                {trainerForm.photo ? (
+                  <img src={trainerForm.photo} alt="Trainer Preview" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
+                ) : (
+                  <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Photo</div>
+                )}
+                <input type="file" accept="image/*" onChange={handleTrainerPhotoUpload} style={{ display: 'none' }} id="trainer-photo-file" />
+                <label htmlFor="trainer-photo-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
+              </div>
+              <input type="text" placeholder="Or paste Photo URL..." value={trainerForm.photo} onChange={e => setTrainerForm({...trainerForm, photo: e.target.value})} />
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={() => setShowTrainerModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Trainer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const openEditTrainer = (trainer) => {
+    setEditingTrainer(trainer);
+    setTrainerForm({
+      name: trainer.name,
+      specialization: trainer.specialization,
+      experience: trainer.experience,
+      photo: trainer.photo || ''
+    });
+    setShowTrainerModal(true);
+  };
+
+  const openAddTrainer = () => {
+    setEditingTrainer(null);
+    setTrainerForm({ name: '', specialization: '', experience: '', photo: '' });
+    setShowTrainerModal(true);
+  };
+
+  const renderGymTrainersTab = () => {
+    return (
+      <div className="sub-panel animate-fade">
+        <div className="card-table-wrapper glass">
+          <div className="table-header">
+            <h3>Club Trainers Registry</h3>
+            <button className="btn btn-primary" onClick={openAddTrainer} style={{ backgroundColor: currentAccent }}>
+              <PlusCircle size={16} /> Add Gym Trainer
+            </button>
+          </div>
+          {tabLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading trainers...</div>
+          ) : trainers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No trainers registered yet.</p>
+              <button className="btn btn-primary" onClick={openAddTrainer} style={{ backgroundColor: currentAccent }}>Register First Trainer</button>
+            </div>
+          ) : (
+            <div className="responsive-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Photo / Name</th>
+                    <th>Specialization Niche</th>
+                    <th>Years Experience</th>
+                    <th>Operator Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trainers.map(trainer => (
+                    <tr key={trainer._id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {trainer.photo ? (
+                            <img src={trainer.photo} alt={trainer.name} style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '50%' }} />
+                          ) : (
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>{trainer.name[0]}</div>
+                          )}
+                          <strong>{trainer.name}</strong>
+                        </div>
+                      </td>
+                      <td>{trainer.specialization}</td>
+                      <td>{trainer.experience}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={() => openEditTrainer(trainer)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: currentAccent }}><Edit size={16} /></button>
+                          <button onClick={() => handleTrainerDelete(trainer._id)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <TrainerModal />
+      </div>
+    );
+  };
+
   // --- DYNAMIC MODULE TAB SWITCHERS ---
   const renderDynamicSubpanel = () => {
+    if (businessType === 'gym') {
+      if (activeTab === 'plans') return renderGymPlansTab();
+      if (activeTab === 'offers') return renderGymOffersTab();
+      if (activeTab === 'trainers') return renderGymTrainersTab();
+    }
+
     if (activeTab === 'overview') {
       if (isSuperAdmin) return renderSuperadminOverview();
       if (businessType === 'gym') return renderGymOverview();
@@ -799,6 +1518,123 @@ const DashboardHome = () => {
             align-items: flex-start;
             gap: 16px;
           }
+        }
+
+        /* Modal Popup Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.65);
+          backdrop-filter: blur(6px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          animation: modalFadeIn 0.2s ease-out;
+        }
+        .modal-content {
+          width: 90%;
+          max-width: 550px;
+          border-radius: var(--radius-lg);
+          border: 1px solid hsla(var(--border-frosted));
+          background: hsla(var(--bg-surface-frosted));
+          backdrop-filter: blur(16px);
+          box-shadow: var(--shadow-xl);
+          padding: 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          animation: modalScaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid hsla(var(--border-frosted));
+          padding-bottom: 14px;
+        }
+        .modal-header h3 {
+          font-size: 1.25rem;
+          color: hsla(var(--text-main));
+          font-weight: 800;
+        }
+        .close-btn {
+          background: none;
+          border: none;
+          color: hsla(var(--text-muted));
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+        }
+        .close-btn:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: hsla(var(--text-main));
+        }
+        .modal-form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .modal-form .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          text-align: left;
+        }
+        .modal-form .form-group label {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: hsla(var(--text-main));
+        }
+        .modal-form .form-group input, 
+        .modal-form .form-group select, 
+        .modal-form .form-group textarea {
+          width: 100%;
+          padding: 10px 14px;
+          border-radius: var(--radius-md);
+          border: 1px solid hsla(var(--border));
+          background-color: hsla(var(--bg-base), 0.4);
+          font-family: var(--font-sans);
+          font-size: 0.95rem;
+          color: hsla(var(--text-main));
+          outline: none;
+          transition: all var(--transition-fast);
+        }
+        .modal-form .form-group input:focus,
+        .modal-form .form-group select:focus,
+        .modal-form .form-group textarea:focus {
+          border-color: ${currentAccent};
+          background-color: hsla(var(--bg-surface));
+        }
+        .form-row {
+          display: flex;
+          gap: 16px;
+        }
+        .form-row .form-group {
+          flex: 1;
+        }
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 10px;
+          border-top: 1px solid hsla(var(--border-frosted));
+          padding-top: 18px;
+        }
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalScaleUp {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>

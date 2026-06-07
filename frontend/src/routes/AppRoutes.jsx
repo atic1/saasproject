@@ -12,6 +12,7 @@ import LandingPage from '../pages/public/LandingPage';
 import Features from '../pages/public/Features';
 import Pricing from '../pages/public/Pricing';
 import Contact from '../pages/public/Contact';
+import PublicGymWebsite from '../pages/public/PublicGymWebsite';
 
 // Auth pages
 import Login from '../pages/auth/Login';
@@ -103,6 +104,7 @@ const AppRoutes = () => {
 
       {/* 5. CUSTOMER PORTAL & PAYMENTS CALLBACKS */}
       <Route path="/:slug/portal" element={<CustomerPortal />} />
+      <Route path="/:slug" element={<PublicGymWebsite />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-failed" element={<PaymentFailed />} />
       <Route path="/payment-pending" element={<PaymentPending />} />

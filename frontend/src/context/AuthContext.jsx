@@ -294,25 +294,65 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Map quick-login preset emails to real backend shortcut credentials
+  const backendCredentialMap = {
+    'gym-owner@fitzone.com': { username: 'admin', password: 'admin123' },
+    'admin@saas.com':        { username: 'superadmin', password: 'superadmin123' },
+  };
+
   const quickLogin = async (presetEmail) => {
+    const credentials = backendCredentialMap[presetEmail];
+
+    // 1. Try real backend login first (gets real MongoDB ObjectIds)
+    if (credentials) {
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(credentials)
+        });
+        const data = await response.json();
+        if (response.ok) {
+          const loggedUser = {
+            ...data.user,
+            avatarUrl: data.user?.avatarUrl ||
+              'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+          };
+          if (loggedUser.platformrole === 'super_admin') {
+            loggedUser.role = 'superadmin';
+          }
+          setUser(loggedUser);
+          localStorage.setItem('saas_user', JSON.stringify(loggedUser));
+          localStorage.setItem('saas_token', data.token);
+
+          const firstMembership = loggedUser.memberships && loggedUser.memberships.length > 0
+            ? loggedUser.memberships[0] : null;
+          await handleSetActiveBusiness(firstMembership);
+
+          const finalUser = firstMembership ? {
+            ...loggedUser,
+            businessId: firstMembership.businessId,
+            businessName: firstMembership.businessName,
+            businessType: firstMembership.businessType
+          } : loggedUser;
+          return finalUser;
+        }
+      } catch (err) {
+        console.warn('Backend quickLogin failed, using mock fallback:', err);
+      }
+    }
+
+    // 2. Fallback to mock for accounts without backend shortcut (salon, clinic demo)
     const found = mockAccounts[presetEmail];
     if (found) {
-      const loggedUser = {
-        ...found.user,
-        memberships: found.memberships
-      };
-      
-      if (loggedUser.platformrole === 'super_admin') {
-        loggedUser.role = 'superadmin';
-      }
-      
+      const loggedUser = { ...found.user, memberships: found.memberships };
+      if (loggedUser.platformrole === 'super_admin') loggedUser.role = 'superadmin';
       setUser(loggedUser);
       localStorage.setItem('saas_user', JSON.stringify(loggedUser));
       localStorage.setItem('saas_token', found.token);
-      
-      const firstMembership = loggedUser.memberships && loggedUser.memberships.length > 0 ? loggedUser.memberships[0] : null;
+      const firstMembership = loggedUser.memberships && loggedUser.memberships.length > 0
+        ? loggedUser.memberships[0] : null;
       await handleSetActiveBusiness(firstMembership);
-      
       const finalUser = firstMembership ? {
         ...loggedUser,
         businessId: firstMembership.businessId,
