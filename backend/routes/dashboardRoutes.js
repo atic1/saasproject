@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
 const Business = require('../models/business');
 const Booking = require('../models/booking');
@@ -14,6 +15,9 @@ const Payment = require('../models/payment');
 router.get('/business/:businessId', async (req, res) => {
   try {
     const { businessId } = req.params;
+    if (!mongoose.isValidObjectId(businessId)) {
+      return res.status(400).json({ message: 'Invalid businessId format' });
+    }
     const business = await Business.findById(businessId);
 
     if (!business) {
@@ -70,6 +74,9 @@ router.get('/business', async (req, res) => {
     const businessId = req.headers['x-business-id'];
     if (!businessId) {
       return res.status(400).json({ message: 'X-Business-Id header required' });
+    }
+    if (!mongoose.isValidObjectId(businessId)) {
+      return res.status(400).json({ message: 'Invalid businessId format' });
     }
 
     const business = await Business.findById(businessId);

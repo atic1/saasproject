@@ -10,6 +10,9 @@ const Customer = require('../models/customer');
 const Invoice = require('../models/invoice');
 const User = require('../models/user');
 const BusinessMember = require('../models/businessMember');
+const Plan = require('../models/plan');
+const Offer = require('../models/offer');
+const Trainer = require('../models/trainer');
 
 const { protect } = require('../middleware/authMiddleware');
 
@@ -181,16 +184,21 @@ router.get('/business/:slug/availability', async (req, res) => {
       }));
     } else {
       // Fallback to Business hours in business timings
-      if (business.timings && business.timings.schedule) {
+      if (business.timings && business.timings.schedule && business.timings.schedule.length > 0) {
         const daySchedule = business.timings.schedule.find(s => s.day === dayOfWeek);
-        if (daySchedule && daySchedule.isOpen) {
-          operatingSlots = [{
-            startTime: daySchedule.open || "09:00",
-            endTime: daySchedule.close || "17:00",
-            capacity: capacity
-          }];
+        if (daySchedule) {
+          if (daySchedule.isOpen) {
+            operatingSlots = [{
+              startTime: daySchedule.open || "09:00",
+              endTime: daySchedule.close || "17:00",
+              capacity: capacity
+            }];
+          } else {
+            return res.json([]); // closed
+          }
         } else {
-          return res.json([]); // closed
+          // day not configured in schedule, fallback to default hours
+          operatingSlots = [{ startTime: "09:00", endTime: "17:00", capacity: capacity }];
         }
       } else {
         // Default default hours
@@ -445,6 +453,165 @@ router.get('/invoices/:id', protect, async (req, res) => {
 
     res.json(invoice);
   } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/portal/business/:slug/public-site
+ * @desc    Get all dynamic content required for the public website of a gym
+ * @access  Public
+ */
+router.get('/business/:slug/public-site', async (req, res) => {
+  try {
+    const business = await Business.findOne({ slug: req.params.slug.toLowerCase() });
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    if (business.status !== 'active') {
+      return res.status(403).json({ message: 'Business is inactive' });
+    }
+
+    const businessIdStr = business._id.toString();
+
+    // Query active plans, active offers, and all trainers
+    const [plans, offers, trainers] = await Promise.all([
+      Plan.find({ businessId: businessIdStr, isActive: true }).sort({ 'display.order': 1 }),
+      Offer.find({ businessId: businessIdStr, isActive: true }).sort({ createdAt: -1 }),
+      Trainer.find({ businessId: businessIdStr }).sort({ createdAt: -1 })
+    ]);
+
+    res.json({
+      business,
+      plans,
+      offers,
+      trainers
+    });
+  } catch (error) {
+    console.error('Error fetching public site data:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/portal/membership/purchase
+ * @desc    Purchase a membership plan and generate an invoice
+ * @access  Private (Customer JWT)
+ */
+router.post('/membership/purchase', protect, async (req, res) => {
+  try {
+    const { businessId, planId } = req.body;
+    if (!businessId || !planId) {
+      return res.status(400).json({ message: 'businessId and planId are required.' });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found.' });
+    }
+
+    const plan = await Plan.findOne({ _id: planId, businessId });
+    if (!plan) {
+      return res.status(404).json({ message: 'Membership plan not found or mismatch.' });
+    }
+
+    // Resolve or create Customer profile
+    let customer = await Customer.findOne({ userId: req.user._id, businessId });
+    if (!customer) {
+      customer = await Customer.findOne({ phone: req.user.phone, businessId });
+      if (customer) {
+        customer.userId = req.user._id;
+        await customer.save();
+      } else {
+        customer = await Customer.create({
+          businessId,
+          userId: req.user._id,
+          name: req.user.name,
+          phone: req.user.phone,
+          email: req.user.email,
+          status: 'active'
+        });
+      }
+    }
+
+    // Create Invoice for membership plan
+    const invoiceNumber = `INV-MEM-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const invoice = new Invoice({
+      businessId,
+      customerId: customer._id,
+      planId: plan._id,
+      invoiceNumber,
+      amount: plan.pricing.basePrice,
+      tax: 0,
+      discount: 0,
+      total: plan.pricing.basePrice,
+      status: 'pending',
+      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days due
+    });
+    await invoice.save();
+
+    res.status(201).json({
+      message: 'Plan purchase initiated. Invoice generated.',
+      invoice
+    });
+  } catch (error) {
+    console.error('Plan purchase error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   PUT /api/portal/profile
+ * @desc    Update customer profile details (name, email, phone)
+ * @access  Private (Customer JWT)
+ */
+router.put('/profile', protect, async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone) {
+      // Validate phone format
+      if (!/^98\d{8}$/.test(phone)) {
+        return res.status(400).json({ message: 'Phone number must be a valid Nepalese number starting with 98 (10 digits)' });
+      }
+      // Check phone uniqueness
+      const existing = await User.findOne({ phone, _id: { $ne: req.user._id } });
+      if (existing) {
+        return res.status(400).json({ message: 'Phone number already in use' });
+      }
+      user.phone = phone;
+    }
+
+    await user.save();
+
+    // Update matching customer profiles
+    const customerUpdates = {};
+    if (name) customerUpdates.name = name;
+    if (email !== undefined) customerUpdates.email = email;
+    if (phone) customerUpdates.phone = phone;
+
+    await Customer.updateMany({ userId: user._id }, { $set: customerUpdates });
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        platformrole: user.platformrole || 'customer',
+        memberships: []
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

@@ -11,6 +11,63 @@ const { protect } = require('../middleware/authMiddleware');
 const providerRegistry = require('../services/payment/ProviderRegistry');
 
 /**
+ * Helper to process paid invoices: confirms bookings or activates membership plans
+ */
+const handlePaidInvoice = async (invoice, paymentMethod, transactionId) => {
+  invoice.status = 'paid';
+  invoice.paidAt = new Date();
+  invoice.paymentMethod = paymentMethod;
+  await invoice.save();
+
+  // 1. If bookingId is present, confirm the booking
+  if (invoice.bookingId) {
+    const Booking = require('../models/booking');
+    const booking = await Booking.findById(invoice.bookingId);
+    if (booking) {
+      booking.status = 'confirmed';
+      booking.payment = {
+        amount: invoice.total,
+        status: 'paid',
+        method: paymentMethod,
+        transactionId: transactionId,
+        paidAt: new Date()
+      };
+      await booking.save();
+    }
+  }
+
+  // 2. If planId is present, activate the membership in the Customer record
+  if (invoice.planId) {
+    const Plan = require('../models/plan');
+    const plan = await Plan.findById(invoice.planId);
+    if (plan) {
+      // Calculate expiration date based on plan duration
+      let durationMs = 30 * 24 * 60 * 60 * 1000; // default 30 days
+      if (plan.duration && plan.duration.value) {
+        const value = plan.duration.value;
+        const unit = plan.duration.unit || 'month';
+        if (unit === 'day') durationMs = value * 24 * 60 * 60 * 1000;
+        else if (unit === 'week') durationMs = value * 7 * 24 * 60 * 60 * 1000;
+        else if (unit === 'month') durationMs = value * 30 * 24 * 60 * 60 * 1000;
+        else if (unit === 'year') durationMs = value * 365 * 24 * 60 * 60 * 1000;
+      }
+
+      const Customer = require('../models/customer');
+      const customer = await Customer.findById(invoice.customerId);
+      if (customer) {
+        customer.membership = {
+          planId: plan._id,
+          status: 'active',
+          startDate: new Date(),
+          endDate: new Date(Date.now() + durationMs)
+        };
+        await customer.save();
+      }
+    }
+  }
+};
+
+/**
  * @route   POST /api/payments/initiate
  * @desc    Initiate a payment transaction for an Invoice
  * @access  Private
@@ -85,27 +142,8 @@ router.post('/initiate', protect, async (req, res) => {
       payment.completedAt = new Date();
       await payment.save();
 
-      // Update invoice status
-      invoice.status = 'paid';
-      invoice.paidAt = new Date();
-      invoice.paymentMethod = 'cash';
-      await invoice.save();
-
-      // Update booking status if linked
-      if (invoice.bookingId) {
-        const booking = await Booking.findById(invoice.bookingId);
-        if (booking) {
-          booking.status = 'confirmed';
-          booking.payment = {
-            amount: invoice.total,
-            status: 'paid',
-            method: 'cash',
-            transactionId: transactionUuid,
-            paidAt: new Date()
-          };
-          await booking.save();
-        }
-      }
+      // Process paid invoice
+      await handlePaidInvoice(invoice, 'cash', transactionUuid);
 
       return res.status(201).json({
         message: 'Payment completed via Cash.',
@@ -174,26 +212,7 @@ router.get('/callback/esewa/success', async (req, res) => {
       // Update Invoice
       const invoice = await Invoice.findById(payment.invoiceId);
       if (invoice) {
-        invoice.status = 'paid';
-        invoice.paidAt = new Date();
-        invoice.paymentMethod = 'esewa';
-        await invoice.save();
-
-        // Update Booking
-        if (invoice.bookingId) {
-          const booking = await Booking.findById(invoice.bookingId);
-          if (booking) {
-            booking.status = 'confirmed';
-            booking.payment = {
-              amount: invoice.total,
-              status: 'paid',
-              method: 'esewa',
-              transactionId: result.transactionId,
-              paidAt: new Date()
-            };
-            await booking.save();
-          }
-        }
+        await handlePaidInvoice(invoice, 'esewa', result.transactionId);
       }
       
       res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);
@@ -262,25 +281,7 @@ router.get('/callback/mock', async (req, res) => {
 
     const invoice = await Invoice.findById(payment.invoiceId);
     if (invoice) {
-      invoice.status = 'paid';
-      invoice.paidAt = new Date();
-      invoice.paymentMethod = 'mock';
-      await invoice.save();
-
-      if (invoice.bookingId) {
-        const booking = await Booking.findById(invoice.bookingId);
-        if (booking) {
-          booking.status = 'confirmed';
-          booking.payment = {
-            amount: invoice.total,
-            status: 'paid',
-            method: 'mock',
-            transactionId: result.transactionId,
-            paidAt: new Date()
-          };
-          await booking.save();
-        }
-      }
+      await handlePaidInvoice(invoice, 'mock', result.transactionId);
     }
 
     res.redirect(`http://localhost:5173/payment-success?uuid=${result.transaction_uuid}`);

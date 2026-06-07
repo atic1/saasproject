@@ -40,4 +40,51 @@ router.post('/:businessId', protect, enforceTenant, requireActiveSubscription, r
     }
 });
 
+// Update an offer
+router.put('/:businessId/:id', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.update'), async (req, res) => {
+    try {
+        if (req.params.businessId !== req.activeBusinessId) {
+            return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
+        }
+
+        const offer = await Offer.findOne({ _id: req.params.id, businessId: req.activeBusinessId });
+        if (!offer) {
+            return res.status(404).json({ message: 'Offer not found.' });
+        }
+
+        const fieldsToUpdate = ['name', 'description', 'code', 'discount', 'applicability', 'validity', 'limits', 'display', 'isActive', 'status'];
+        fieldsToUpdate.forEach(field => {
+            if (req.body[field] !== undefined) {
+                offer[field] = req.body[field];
+            }
+        });
+
+        offer.updatedAt = new Date();
+        await offer.save();
+        res.json(offer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+// Delete an offer
+router.delete('/:businessId/:id', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.delete'), async (req, res) => {
+    try {
+        if (req.params.businessId !== req.activeBusinessId) {
+            return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
+        }
+
+        const offer = await Offer.findOneAndDelete({ _id: req.params.id, businessId: req.activeBusinessId });
+        if (!offer) {
+            return res.status(404).json({ message: 'Offer not found.' });
+        }
+
+        res.json({ message: 'Offer deleted successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
 module.exports = router;

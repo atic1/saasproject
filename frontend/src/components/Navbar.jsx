@@ -20,8 +20,9 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  const HIDDEN_PREFIXES = ['/superadmin', '/super-admin', '/admin', '/app'];
-  if (HIDDEN_PREFIXES.some(prefix => location.pathname.startsWith(prefix))) {
+  const HIDDEN_PREFIXES = ['/superadmin', '/super-admin', '/admin', '/app', '/payment-success', '/payment-failed', '/payment-pending'];
+  const isPortal = /^\/[^/]+\/portal/.test(location.pathname);
+  if (isPortal || HIDDEN_PREFIXES.some(prefix => location.pathname.startsWith(prefix))) {
     return null;
   }
 

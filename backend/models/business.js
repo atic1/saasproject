@@ -35,7 +35,10 @@ const businessSchema = new mongoose.Schema({
     },
     coverImage: String,
     description: String,
-    tagline: String
+    tagline: String,
+    heroBanner: String,
+    about: String,
+    gallery: [String]
   },
   
   // Contact

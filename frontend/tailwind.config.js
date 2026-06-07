@@ -19,7 +19,20 @@ export default {
         }
       },
       animation: {
-        'spin-slow': 'spin 2s linear infinite',
+        'spin-slow':   'spin 2s linear infinite',
+        'slide-up':    'slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both',
+        'fade-in':     'fadeIn 0.25s ease both',
+        'bounce-slow': 'bounce 2s infinite',
+      },
+      keyframes: {
+        slideUp: {
+          '0%':   { opacity: '0', transform: 'translateY(24px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
       },
       backdropBlur: {
         xs: '2px',
