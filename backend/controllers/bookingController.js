@@ -150,23 +150,35 @@ const checkStaffAvailability = async (businessId, { date, startTime, endTime, st
   if (!schedule) {
     const Business = require('../models/business');
     const business = await Business.findById(businessId);
-    if (business && business.timings && business.timings.schedule) {
+    if (business && business.timings && business.timings.schedule && business.timings.schedule.length > 0) {
       const daySchedule = business.timings.schedule.find(s => s.day === dayOfWeek);
-      if (daySchedule && daySchedule.isOpen) {
-        const withinHours = startTime >= daySchedule.open && endTime <= daySchedule.close;
-        if (!withinHours) {
+      if (daySchedule) {
+        if (daySchedule.isOpen) {
+          const withinHours = startTime >= (daySchedule.open || "09:00") && endTime <= (daySchedule.close || "17:00");
+          if (!withinHours) {
+            return {
+              available: false,
+              reason: `Requested time ${startTime}-${endTime} is outside business hours (${daySchedule.open}-${daySchedule.close})`
+            };
+          }
+          return { available: true };
+        } else {
           return {
             available: false,
-            reason: `Requested time ${startTime}-${endTime} is outside business hours (${daySchedule.open}-${daySchedule.close})`
+            reason: `Business is closed on ${dayOfWeek.toUpperCase()}`
           };
         }
-        return { available: true };
-      } else {
-        return {
-          available: false,
-          reason: `Business is closed on ${dayOfWeek.toUpperCase()}`
-        };
       }
+    }
+    // Fallback default timings
+    const defaultOpen = "09:00";
+    const defaultClose = "17:00";
+    const withinDefault = startTime >= defaultOpen && endTime <= defaultClose;
+    if (!withinDefault) {
+      return {
+        available: false,
+        reason: `Requested time ${startTime}-${endTime} is outside default hours (${defaultOpen}-${defaultClose})`
+      };
     }
     return { available: true };
   }

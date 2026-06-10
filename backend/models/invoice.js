@@ -18,6 +18,11 @@ const invoiceSchema = new mongoose.Schema({
     ref: 'Booking',
     required: false
   },
+  planId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan',
+    required: false
+  },
   invoiceNumber: {
     type: String,
     required: true,

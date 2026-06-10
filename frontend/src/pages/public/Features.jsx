@@ -66,7 +66,7 @@ const Features = () => {
       <section className="features-header text-center">
         <span className="section-label">Enterprise-Level Capability</span>
         <h2>Complete Core Features Built for Scale</h2>
-        <p>SyncSaaS delivers specialized tools in one unified login. No generic compromises. Select your vertical below to view specific custom features.</p>
+        <p>BizNepal delivers specialized tools in one unified login. No generic compromises. Select your vertical below to view specific custom features.</p>
       </section>
 
       {/* Dynamic Tab Switcher */}

@@ -16,7 +16,7 @@ const Pricing = () => {
         "Unified Calendar & Booking Books",
         "Email Client Notifications",
         "Standard Billing & Checkout receipts",
-        "SyncSaaS standard support"
+        "BizNepal standard support"
       ],
       ctaText: "Start Starter Trial",
       planKey: "starter",
