@@ -616,4 +616,46 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/portal/customer/:customerId
+ * @desc    Fetch customer specific portal details: customer, business, bookings, invoices
+ * @access  Public
+ */
+router.get('/customer/:customerId', async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.customerId)
+      .populate('membership.planId');
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const business = await Business.findById(customer.businessId);
+    if (!business) {
+      return res.status(404).json({ message: 'Associated business not found' });
+    }
+
+    // Fetch bookings for this customer
+    const bookings = await Booking.find({ customerId: customer._id })
+      .populate('serviceId')
+      .populate('staffId', 'name email phone')
+      .sort({ date: -1, startTime: -1 });
+
+    // Fetch invoices for this customer
+    const invoices = await Invoice.find({ customerId: customer._id })
+      .populate('planId')
+      .populate('bookingId')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      customer,
+      business,
+      bookings,
+      invoices
+    });
+  } catch (error) {
+    console.error('Customer portal error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;

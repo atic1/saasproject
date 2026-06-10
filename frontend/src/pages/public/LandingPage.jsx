@@ -40,8 +40,8 @@ const LandingPage = () => {
 
   // Mock FAQs
   const faqs = [
-    { q: "Is SyncSaaS multiple separate apps?", a: "No! SyncSaaS is a single, unified enterprise-level software platform. Depending on your logged-in profile and business configuration, the system automatically shifts its layouts, databases, sidebars, and modules to serve either a Gym, Salon, Clinic, or SaaS Super Admin." },
-    { q: "Can I manage multiple business branches?", a: "Absolutely. SyncSaaS has robust multi-tenant architectures built at its core. You can run one branch or one hundred branches, tracking individual analytics while aggregating global statistics at the master owner level." },
+    { q: "Is BizNepal multiple separate apps?", a: "No! BizNepal is a single, unified enterprise-level software platform. Depending on your logged-in profile and business configuration, the system automatically shifts its layouts, databases, sidebars, and modules to serve either a Gym, Salon, Clinic, or SaaS Super Admin." },
+    { q: "Can I manage multiple business branches?", a: "Absolutely. BizNepal has robust multi-tenant architectures built at its core. You can run one branch or one hundred branches, tracking individual analytics while aggregating global statistics at the master owner level." },
     { q: "Is my tenant database secure?", a: "Security is our highest priority. All patient data, member records, bank invoices, and staff rosters are strongly isolated, encrypted at rest, and served under high-level SSL and JWT authentication standards." },
     { q: "Do you charge extra for scheduling tools?", a: "No, all core modules (scheduler, CRM, staff attendance, invoicing, and basic growth reports) are included in our standard pricing plans, making it easy to grow without hidden fees." }
   ];
@@ -53,7 +53,7 @@ const LandingPage = () => {
         <div className="hero-content">
           <div className="hero-badge glass">
             <Sparkles size={16} className="text-primary" />
-            <span>Introducing SyncSaaS v2.4.0</span>
+            <span>Introducing BizNepal v2.4.0</span>
           </div>
           <h1>
             One Premium Software. <br />
@@ -87,7 +87,7 @@ const LandingPage = () => {
                 <span className="dot dot-green"></span>
               </div>
               <div className="chrome-search">
-                <span>app.syncsaas.com/dashboard</span>
+                <span>app.biznepal.com/dashboard</span>
               </div>
             </div>
             <div className="chrome-body">
@@ -151,7 +151,7 @@ const LandingPage = () => {
         <div className="section-header text-center">
           <span className="section-label">Target Verticals</span>
           <h2>Tailored Modules for Diverse Niches</h2>
-          <p>We do not deliver weak generic forms. SyncSaaS automatically remaps all database entities, sidebar links, and views depending on your category.</p>
+          <p>We do not deliver weak generic forms. BizNepal automatically remaps all database entities, sidebar links, and views depending on your category.</p>
         </div>
 
         <div className="grid-cols-3 category-grid">
@@ -179,7 +179,7 @@ const LandingPage = () => {
             <span className="section-label">State-of-the-Art Insights</span>
             <h2>Run Your Business on Live Data Analytics</h2>
             <p>
-              Forget manually calculating monthly rosters, accounting ledger receipts, or stylist sales margins. SyncSaaS calculates and visualizes key metrics automatically.
+              Forget manually calculating monthly rosters, accounting ledger receipts, or stylist sales margins. BizNepal calculates and visualizes key metrics automatically.
             </p>
             <ul className="insights-list">
               <li>
@@ -241,7 +241,7 @@ const LandingPage = () => {
 
         <div className="grid-cols-3 testimonial-grid">
           <div className="testimonial-card glass">
-            <p>"Before SyncSaaS, we were chasing gym fee renewals on paper notebooks. Now attendance, gate control, and fee receipts are fully synced. Outstanding!"</p>
+            <p>"Before BizNepal, we were chasing gym fee renewals on paper notebooks. Now attendance, gate control, and fee receipts are fully synced. Outstanding!"</p>
             <div className="testifier-info">
               <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Alex Rivera" />
               <div>

@@ -21,9 +21,14 @@ const PublicLayout = () => {
       <footer className="public-footer glass">
         <div className="container footer-grid">
           <div className="footer-brand-col">
-            <Link to="/" className="footer-logo">
-              <Sparkles className="logo-icon" />
-              <span>SyncSaaS</span>
+            <Link to="/" className="footer-logo flex items-center gap-2.5 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-black text-sm">BN</span>
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-black text-gray-900 dark:text-white text-[15px] tracking-tight">BizNepal</span>
+                <span className="text-[9px] font-medium text-purple-500 tracking-widest uppercase text-left">SaaS Platform</span>
+              </div>
             </Link>
             <p className="footer-desc">
               The unified multi-tenant SaaS hub helping modern gyms, salons, and medical clinics run operations, schedules, clients, and automated billing with state of the art software tools.
@@ -63,7 +68,7 @@ const PublicLayout = () => {
               </li>
               <li>
                 <Mail size={16} />
-                <span>support@syncsaas.com</span>
+                <span>support@biznepal.com</span>
               </li>
               <li>
                 <Phone size={16} />
@@ -75,7 +80,7 @@ const PublicLayout = () => {
 
         <div className="footer-bottom">
           <div className="container footer-bottom-flex">
-            <p>&copy; {new Date().getFullYear()} SyncSaaS Inc. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} BizNepal Inc. All rights reserved.</p>
             <div className="footer-bottom-links">
               <a href="#">Security</a>
               <a href="#">Status</a>

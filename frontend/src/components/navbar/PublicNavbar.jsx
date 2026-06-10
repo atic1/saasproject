@@ -13,9 +13,14 @@ const PublicNavbar = () => {
   return (
     <nav className="glass sticky-nav">
       <div className="container nav-wrapper">
-        <Link to="/" className="nav-logo" onClick={() => setIsOpen(false)}>
-          <Sparkles className="logo-icon" />
-          <span>SyncSaaS</span>
+        <Link to="/" className="nav-logo flex items-center gap-2.5 group" onClick={() => setIsOpen(false)}>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+            <span className="text-white font-black text-sm">BN</span>
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="font-black text-gray-900 dark:text-white text-[15px] tracking-tight">BizNepal</span>
+            <span className="text-[9px] font-medium text-purple-500 tracking-widest uppercase">SaaS Platform</span>
+          </div>
         </Link>
 
         {/* Desktop Links */}

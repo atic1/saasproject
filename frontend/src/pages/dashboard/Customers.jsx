@@ -130,12 +130,16 @@ const Customers = () => {
     email: c.email || '',
     phone: c.phone || '',
     package: c.membership?.planId?.name || c.membership?.planId || 'Basic',
+    status: c.membership?.status === 'active' ? 'paid' : (c.membership?.status || 'pending'),
     gateStatus: c.membership?.status === 'active' ? 'Checked In' : 'Checked Out',
     preference: c.medicalInfo?.notes || '',
     stylist: '',
     medNo: c.qrCode?.code || 'MC-2026-N/A',
     doc: ''
-  })) : getCustomersData();
+  })) : getCustomersData().map(c => ({
+    ...c,
+    status: c.gateStatus === 'Checked In' ? 'paid' : (c.gateStatus === 'Suspended' ? 'pending' : 'active')
+  }));
 
   const filtered = allRecords.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.email.toLowerCase().includes(search.toLowerCase()));
 
@@ -205,6 +209,8 @@ const Customers = () => {
                   <th>Subscription Package</th>
                   <th>Phone Number</th>
                   <th>Gate Access Status</th>
+                  <th>Status</th>
+                  <th>Portal Link</th>
                 </tr>
               ) : businessType === 'salon' ? (
                 <tr>
@@ -213,6 +219,8 @@ const Customers = () => {
                   <th>Preferred Stylist</th>
                   <th>Phone Number</th>
                   <th>Preferred Cosmetics</th>
+                  <th>Status</th>
+                  <th>Portal Link</th>
                 </tr>
               ) : (
                 <tr>
@@ -221,6 +229,8 @@ const Customers = () => {
                   <th>Health Card No.</th>
                   <th>Phone Number</th>
                   <th>Attending Doctor</th>
+                  <th>Status</th>
+                  <th>Portal Link</th>
                 </tr>
               )}
             </thead>
@@ -253,25 +263,55 @@ const Customers = () => {
                             {r.gateStatus}
                           </span>
                         </td>
+                        <td>
+                          <span className={`badge ${r.status === 'paid' ? 'active' : r.status === 'active' ? 'active' : 'pending'}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td>
+                          <a href={`/customer/${r.id}/portal`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-500 font-semibold underline">
+                            Portal 🔗
+                          </a>
+                        </td>
                       </>
                     ) : businessType === 'salon' ? (
                       <>
                         <td>{r.stylist}</td>
                         <td>{r.phone}</td>
                         <td>{r.preference}</td>
+                        <td>
+                          <span className={`badge ${r.status === 'paid' ? 'active' : r.status === 'active' ? 'active' : 'pending'}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td>
+                          <a href={`/customer/${r.id}/portal`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-500 font-semibold underline">
+                            Portal 🔗
+                          </a>
+                        </td>
                       </>
                     ) : (
                       <>
                         <td><code>{r.medNo}</code></td>
                         <td>{r.phone}</td>
                         <td>{r.doc}</td>
+                        <td>
+                          <span className={`badge ${r.status === 'paid' ? 'active' : r.status === 'active' ? 'active' : 'pending'}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td>
+                          <a href={`/customer/${r.id}/portal`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-500 font-semibold underline">
+                            Portal 🔗
+                          </a>
+                        </td>
                       </>
                     )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center" style={{ padding: '40px' }}>
+                  <td colSpan={isSuperAdmin ? 5 : 7} className="text-center" style={{ padding: '40px' }}>
                     No matching records found.
                   </td>
                 </tr>

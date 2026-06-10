@@ -29,6 +29,7 @@ import SettingsPage from '../pages/dashboard/Settings';
 
 // Portal pages
 import CustomerPortal from '../pages/portal/CustomerPortal';
+import CustomerSpecificPortal from '../pages/portal/CustomerSpecificPortal';
 import PaymentSuccess from '../pages/portal/PaymentSuccess';
 import PaymentFailed from '../pages/portal/PaymentFailed';
 import PaymentPending from '../pages/portal/PaymentPending';
@@ -103,6 +104,7 @@ const AppRoutes = () => {
       <Route path="/super-admin" element={<Navigate to="/superadmin/dashboard" replace />} />
 
       {/* 5. CUSTOMER PORTAL & PAYMENTS CALLBACKS */}
+      <Route path="/customer/:customerId/portal" element={<CustomerSpecificPortal />} />
       <Route path="/:slug/portal" element={<CustomerPortal />} />
       <Route path="/:slug" element={<PublicGymWebsite />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />

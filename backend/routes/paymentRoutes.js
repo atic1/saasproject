@@ -125,17 +125,22 @@ router.post('/initiate', protect, async (req, res) => {
       referenceType: invoice.bookingId ? 'Booking' : undefined,
       description: `Payment for Invoice #${invoice.invoiceNumber}`,
       amount: {
-        subtotal: invoice.amount,
-        tax: invoice.tax,
-        discount: invoice.discount,
-        total: invoice.total,
-        currency: 'NPR'
-      },
+          subtotal: String(invoice.amount),
+          tax: String(invoice.tax || 0),
+          discount: String(invoice.discount || 0),
+          total: String(invoice.total),
+          currency: 'NPR'
+        },
       method: method,
       provider: method === 'cash' ? 'cash' : method,
       status: method === 'cash' ? 'completed' : 'pending',
       collectedBy: req.user._id
     });
+    console.log("=== PAYMENT INIT DEBUG ===");
+    console.log("invoice.total:", invoice.total);
+    console.log("invoice.tax:", invoice.tax);
+    console.log("invoice.amount:", invoice.amount);
+    console.log("transaction_uuid:", transactionUuid);
 
     if (method === 'cash') {
       // Direct Cash Flow (completed immediately)
@@ -156,9 +161,13 @@ router.post('/initiate', protect, async (req, res) => {
     await payment.save();
 
     const provider = providerRegistry.resolve(method);
+    
     const checkoutData = await provider.initiatePayment({ payment, invoice, business });
 
-    res.status(200).json({
+    console.log("=== FINAL PAYMENT PAYLOAD SENT TO ESEWA ===");
+    console.log(checkoutData);
+
+    return res.status(200).json({
       message: 'Payment initiated.',
       payment,
       checkout: checkoutData

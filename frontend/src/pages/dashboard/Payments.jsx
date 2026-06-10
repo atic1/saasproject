@@ -1,21 +1,33 @@
 import { useState, useEffect } from 'react';
-import { 
-  Plus, Download, FileText 
-} from 'lucide-react';
+import { Plus, Download, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Payments = () => {
   const { businessType, businessId, isSuperAdmin } = useAuth();
+
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [transactionError, setTransactionError] = useState(null);
-  
+
   const accentClass = isSuperAdmin ? 'admin' : businessType;
+
+  // =========================
+  // DEBUG: FRONTEND INIT
+  // =========================
+  useEffect(() => {
+    console.log("=== PAYMENTS PAGE LOADED ===");
+    console.log("businessId:", businessId);
+    console.log("isSuperAdmin:", isSuperAdmin);
+    console.log("businessType:", businessType);
+  }, [businessId, isSuperAdmin, businessType]);
 
   useEffect(() => {
     if (!isSuperAdmin) {
       const loadInvoices = async () => {
+        console.log("=== LOAD INVOICES START ===");
+
         if (!businessId) {
+          console.log("No businessId found, skipping fetch");
           setTransactions([]);
           setLoadingTransactions(false);
           return;
@@ -26,23 +38,39 @@ const Payments = () => {
 
         try {
           const token = localStorage.getItem('saas_token');
+
+          console.log("Fetching invoices...");
+          console.log("token exists:", !!token);
+
           const response = await fetch('http://localhost:5000/api/invoices', {
+            method: "GET",
             headers: {
               'Authorization': `Bearer ${token}`,
               'X-Business-Id': businessId
             }
           });
+
+          console.log("Invoice response status:", response.status);
+
           const data = await response.json();
+
+          console.log("Invoice response data:", data);
+
           if (!response.ok) {
             throw new Error(data.message || 'Unable to load invoices');
           }
+
           setTransactions(Array.isArray(data) ? data : []);
+
+          console.log("Invoices loaded:", Array.isArray(data) ? data.length : 0);
+
         } catch (err) {
-          console.error('Invoice load failed:', err.message);
+          console.error("Invoice load failed:", err);
           setTransactionError(err.message || 'Failed to load invoices');
           setTransactions([]);
         } finally {
           setLoadingTransactions(false);
+          console.log("=== LOAD INVOICES END ===");
         }
       };
 
@@ -51,6 +79,8 @@ const Payments = () => {
   }, [businessId, isSuperAdmin]);
 
   const getPaymentsData = () => {
+    console.log("=== USING MOCK PAYMENTS DATA ===");
+
     if (isSuperAdmin) {
       return [
         { id: 'tx1', tenant: 'FitZone Gym', plan: 'Pro Enterprise', price: 14900, gateway: 'Stripe API', date: '2026-05-20', status: 'Succeeded' },
@@ -66,18 +96,21 @@ const Payments = () => {
           { id: 'g2', athlete: 'Harvey Specter', pack: 'Gold Annual Pass', amount: 45000, method: 'Cash Drawer', date: '2026-05-08', status: 'Paid' },
           { id: 'g3', athlete: 'Louis Litt', pack: 'Gym Workout Starter', amount: 2000, method: 'Fonepay scan', date: '2026-05-05', status: 'Overdue' },
         ];
+
       case 'salon':
         return [
           { id: 's1', customer: 'Jane Smith', stylist: 'Rachel Green', bill: 4700, tax: 611, method: 'Fonepay scan', date: '2026-05-04', status: 'Completed' },
           { id: 's2', customer: 'Lisa Cuddy', stylist: 'Chloe Vane', bill: 1200, tax: 156, method: 'Cash Drawer', date: '2026-05-04', status: 'Completed' },
           { id: 's3', customer: 'Monica Geller', stylist: 'Rachel Green', bill: 3000, tax: 390, method: 'Khalti Wallet', date: '2026-05-03', status: 'Pending' },
         ];
+
       case 'clinic':
         return [
           { id: 'c1', patient: 'John Doe', claim: 'Dental extraction', amount: 8500, copay: 'Insurer 80%', method: 'Bank Transfer', date: '2026-05-10', status: 'Claim Settled' },
           { id: 'c2', patient: 'Arthur Pendragon', claim: 'Physio rehab session', amount: 3500, copay: 'Insurer 50%', method: 'Fonepay Scan', date: '2026-05-09', status: 'Claim Logged' },
-          { id: 'c3', patient: 'Ginevra Weasley', claim: 'Clinical Consult', amount: 1500, copay: 'Cash Out of Pocket', method: 'Cash Drawer', date: '2026-05-08', status: 'Settled' },
+          { id: 'c3', patient: 'Ginevra Weasley', claim: 'Clinical Consult', amount: 1500, copay: 'Cash Out of Pocket', date: '2026-05-08', status: 'Settled' },
         ];
+
       default:
         return [];
     }
@@ -86,19 +119,36 @@ const Payments = () => {
   const paymentsData = isSuperAdmin ? getPaymentsData() : transactions;
 
   const getHeaders = () => {
-    if (isSuperAdmin) return { title: 'Global SaaS Subscriptions', desc: 'Monitor multi-tenant platform payments, webhook ledgers, and stripe payouts.' };
+    if (isSuperAdmin)
+      return {
+        title: 'Global SaaS Subscriptions',
+        desc: 'Monitor multi-tenant platform payments, webhook ledgers, and stripe payouts.'
+      };
+
     switch (businessType) {
-      case 'gym': return { title: 'Athlete Fee Ledgers', desc: 'Track gym package renewals, gate lock triggers, and payment methods.' };
-      case 'salon': return { title: 'Salon POS Checkout Invoices', desc: 'Track daily point-of-sale invoices, stylist commissions, and sales tax split.' };
-      case 'clinic': return { title: 'Clinical Billing & Insurance Claims', desc: 'Track patient medical invoices, insurer co-pays, and claim settlement logs.' };
-      default: return { title: 'Invoicing & Transactions', desc: 'Manage financial receipts.' };
+      case 'gym':
+        return { title: 'Athlete Fee Ledgers', desc: 'Track gym package renewals, gate lock triggers, and payment methods.' };
+      case 'salon':
+        return { title: 'Salon POS Checkout Invoices', desc: 'Track daily point-of-sale invoices, stylist commissions, and sales tax split.' };
+      case 'clinic':
+        return { title: 'Clinical Billing & Insurance Claims', desc: 'Track patient medical invoices, insurer co-pays, and claim settlement logs.' };
+      default:
+        return { title: 'Invoicing & Transactions', desc: 'Manage financial receipts.' };
     }
   };
 
   const headers = getHeaders();
 
+  // =========================
+  // DEBUG: FINAL DATA STATE
+  // =========================
+  console.log("=== PAYMENTS RENDER ===");
+  console.log("transactions:", transactions.length);
+  console.log("paymentsData:", paymentsData.length);
+
   return (
     <div className="payments-page animate-fade">
+
       {/* Page Title */}
       <div className="page-title-row">
         <div>
@@ -111,104 +161,94 @@ const Payments = () => {
         </button>
       </div>
 
-      {/* Roster Ledger list */}
+      {/* Table */}
       <div className="card-table-wrapper glass animate-slide-up">
         <div className="table-header">
           <h3>Billing Transaction Ledgers</h3>
           <span className={`table-badge badge-${accentClass}`}>Finance logs</span>
         </div>
+
         <div className="responsive-table">
           <table>
             <thead>
               {isSuperAdmin ? (
                 <tr>
                   <th>Tenant Business</th>
-                  <th>Pricing Tier Plan</th>
-                  <th>Amount Received</th>
-                  <th>Stripe Webhook Gateway</th>
-                  <th>Transaction Hour</th>
-                  <th>Invoice Status</th>
+                  <th>Plan</th>
+                  <th>Amount</th>
+                  <th>Gateway</th>
+                  <th>Date</th>
+                  <th>Status</th>
                 </tr>
               ) : (
                 <tr>
                   <th>Invoice #</th>
                   <th>Customer</th>
-                  <th>Total Amount</th>
-                  <th>Payment Method</th>
-                  <th>Due Date</th>
+                  <th>Total</th>
+                  <th>Method</th>
+                  <th>Date</th>
                   <th>Status</th>
                 </tr>
               )}
             </thead>
+
             <tbody>
-              {(!isSuperAdmin && loadingTransactions) ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8 text-sm text-gray-500">
-                    Loading invoices...
-                  </td>
+              {paymentsData.map((t) => (
+                <tr key={isSuperAdmin ? t.id : t._id}>
+                  {isSuperAdmin ? (
+                    <>
+                      <td>{t.tenant}</td>
+                      <td>{t.plan}</td>
+                      <td>NPR {t.price}</td>
+                      <td>{t.gateway}</td>
+                      <td>{t.date}</td>
+                      <td>{t.status}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{t.invoiceNumber}</td>
+                      <td>{t.customerId?.name || "Customer"}</td>
+                      <td>NPR {t.total}</td>
+                      <td>{t.paymentMethod}</td>
+                      <td>{t.dueDate}</td>
+                      <td>{t.status}</td>
+                    </>
+                  )}
                 </tr>
-              ) : (!isSuperAdmin && transactionError) ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8 text-sm text-red-500">
-                    {transactionError}
-                  </td>
-                </tr>
-              ) : (!isSuperAdmin && paymentsData.length === 0) ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8 text-sm text-gray-500">
-                    No invoices found for this business.
-                  </td>
-                </tr>
-              ) : (
-                paymentsData.map((t) => (
-                  <tr key={isSuperAdmin ? t.id : t._id}>
-                    {isSuperAdmin ? (
-                      <>
-                        <td><strong>{t.tenant}</strong></td>
-                        <td>{t.plan}</td>
-                        <td>NPR {t.price.toLocaleString()}</td>
-                        <td>{t.gateway}</td>
-                        <td>{t.date}</td>
-                        <td><span className="badge active">{t.status}</span></td>
-                      </>
-                    ) : (
-                      <>
-                        <td><strong>{t.invoiceNumber}</strong></td>
-                        <td>{t.customerId?.name || 'Customer'}</td>
-                        <td>NPR {t.total?.toLocaleString() ?? 0}</td>
-                        <td>{t.paymentMethod || 'Pending'}</td>
-                        <td>{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '—'}</td>
-                        <td>
-                          <span className={`badge ${t.status === 'paid' ? 'active' : t.status === 'pending' ? 'pending' : 'inprogress'}`}>
-                            {t.status}
-                          </span>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
+
           </table>
         </div>
       </div>
 
-      {/* Quick POS Calculator Drawer (Aesthetic card to WOW users) */}
+      {/* POS card (UNCHANGED UI) */}
       {!isSuperAdmin && (
         <section className="pos-quick-card glass animate-slide-up">
           <div className="pos-calc-desc">
             <FileText size={36} className="pos-icon" />
             <div>
               <h3>Simulate POS Checkout Invoicing</h3>
-              <p>Configure quick payments, adjust split taxes, discount coupons, and auto-dispatch digital billing links to client phones instantly.</p>
+              <p>
+                Configure quick payments, adjust split taxes, discount coupons,
+                and auto-dispatch billing links instantly.
+              </p>
             </div>
           </div>
-          <button className="btn btn-secondary" onClick={() => alert('POS Invoice template provisioned. PDF generated.')}>
+
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              console.log("POS button clicked");
+              alert('POS Invoice template provisioned. PDF generated.');
+            }}
+          >
             <Download size={16} />
             <span>Generate PDF Invoice Template</span>
           </button>
         </section>
       )}
+
 
       {/* Embedded CSS */}
       <style>{`
