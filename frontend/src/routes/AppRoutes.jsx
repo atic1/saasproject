@@ -12,6 +12,7 @@ import LandingPage from '../pages/public/LandingPage';
 import Features from '../pages/public/Features';
 import Pricing from '../pages/public/Pricing';
 import Contact from '../pages/public/Contact';
+import GymWebsite from '../pages/public/GymWebsite';
 
 // Auth pages
 import Login from '../pages/auth/Login';
@@ -25,6 +26,7 @@ import Bookings from '../pages/dashboard/Bookings';
 import Payments from '../pages/dashboard/Payments';
 import Reports from '../pages/dashboard/Reports';
 import SettingsPage from '../pages/dashboard/Settings';
+import GymWebsiteManager from '../pages/dashboard/GymWebsiteManager';
 
 // Portal pages
 import CustomerPortal from '../pages/portal/CustomerPortal';
@@ -87,6 +89,7 @@ const AppRoutes = () => {
         <Route path="bookings" element={<Bookings />} />
         <Route path="payments" element={<Payments />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="gym-website" element={<GymWebsiteManager />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
@@ -106,6 +109,9 @@ const AppRoutes = () => {
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-failed" element={<PaymentFailed />} />
       <Route path="/payment-pending" element={<PaymentPending />} />
+
+      {/* 5.5. PUBLIC GYM WEBSITE */}
+      <Route path="/:slug" element={<GymWebsite />} />
 
       {/* 6. WILDCARD CATCH-ALL */}
       <Route path="*" element={<Navigate to="/" replace />} />

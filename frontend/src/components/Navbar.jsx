@@ -20,8 +20,10 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  const HIDDEN_PREFIXES = ['/superadmin', '/super-admin', '/admin', '/app'];
-  if (HIDDEN_PREFIXES.some(prefix => location.pathname.startsWith(prefix))) {
+  const SHOW_NAVBAR_PATHS = ['/', '/features', '/pricing', '/contact', '/about', '/search', '/login', '/register', '/forgot-password'];
+  const shouldShowNavbar = SHOW_NAVBAR_PATHS.includes(location.pathname) || location.pathname.startsWith('/search');
+
+  if (!shouldShowNavbar) {
     return null;
   }
 
