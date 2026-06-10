@@ -27,7 +27,7 @@ const Contact = () => {
             <Mail className="info-icon" />
             <div>
               <h3>Email Inquiries</h3>
-              <p className="val">sales@syncsaas.com</p>
+              <p className="val">sales@biznepal.com</p>
               <p className="desc">Expect a detailed response within 3 hours.</p>
             </div>
           </div>

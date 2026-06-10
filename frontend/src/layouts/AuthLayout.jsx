@@ -13,9 +13,14 @@ const AuthLayout = () => {
 
       {/* Auth Navbar (Simple) */}
       <header className="auth-header container">
-        <Link to="/" className="auth-logo">
-          <Sparkles className="logo-icon" />
-          <span>SyncSaaS</span>
+        <Link to="/" className="auth-logo flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+            <span className="text-white font-black text-sm">BN</span>
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="font-black text-gray-900 dark:text-white text-[15px] tracking-tight">BizNepal</span>
+            <span className="text-[9px] font-medium text-purple-500 tracking-widest uppercase text-left">SaaS Platform</span>
+          </div>
         </Link>
         <div className="auth-header-actions">
           <button onClick={toggleTheme} className="theme-btn" aria-label="Toggle theme">
@@ -36,7 +41,7 @@ const AuthLayout = () => {
       </main>
 
       <footer className="auth-footer">
-        <p>&copy; {new Date().getFullYear()} SyncSaaS. Empowering global local businesses.</p>
+        <p>&copy; {new Date().getFullYear()} BizNepal. Empowering Nepalese local businesses.</p>
       </footer>
 
       {/* Embedded CSS for Auth Layout */}
