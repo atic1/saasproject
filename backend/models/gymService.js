@@ -1,33 +1,24 @@
 const mongoose = require('mongoose');
 
-const trainerSchema = new mongoose.Schema({
+const gymServiceSchema = new mongoose.Schema({
   businessId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Business',
     required: true,
     index: true
   },
-  name: {
+  serviceName: {
     type: String,
     required: true,
-    trim: true
+    trim: true   // e.g. "Personal Training", "Weight Loss", "CrossFit"
   },
-  photo: {
+  description: {
     type: String,
     default: ''
   },
-  specialization: {
+  icon: {
     type: String,
-    required: true,
-    trim: true   // e.g. "Strength & Conditioning", "Yoga", "CrossFit"
-  },
-  experience: {
-    type: String,
-    default: ''  // e.g. "5+ Years", "3 Years"
-  },
-  bio: {
-    type: String,
-    default: ''
+    default: 'Dumbbell'   // Lucide icon name for frontend rendering
   },
   isActive: {
     type: Boolean,
@@ -37,9 +28,9 @@ const trainerSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-trainerSchema.pre('save', function (next) {
+gymServiceSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-module.exports = mongoose.model('Trainer', trainerSchema);
+module.exports = mongoose.model('GymService', gymServiceSchema);

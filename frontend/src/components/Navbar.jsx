@@ -20,6 +20,7 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  // Hide navbar on dashboard, superadmin, portal, and payment callback pages
   const HIDDEN_PREFIXES = ['/superadmin', '/super-admin', '/admin', '/app', '/payment-success', '/payment-failed', '/payment-pending'];
   const isPortal = /^\/[^/]+\/portal/.test(location.pathname);
   if (isPortal || HIDDEN_PREFIXES.some(prefix => location.pathname.startsWith(prefix))) {

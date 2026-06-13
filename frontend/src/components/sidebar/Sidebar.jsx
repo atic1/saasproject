@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, LayoutDashboard, Users, Calendar, CreditCard, 
   BarChart3, Settings, ShieldAlert, LogOut, Briefcase, 
-  Stethoscope, Dumbbell, Scissors, UserCheck, Shield
+  Stethoscope, Dumbbell, Scissors, UserCheck, Shield, Globe
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -55,6 +55,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { label: 'Offers & Promos', path: '/app/dashboard?tab=offers', icon: <Sparkles size={20} /> },
           { label: 'Fee Payments', path: '/app/payments', icon: <CreditCard size={20} /> },
           { label: 'Growth Reports', path: '/app/reports', icon: <BarChart3 size={20} /> },
+          { label: 'Gym Website', path: '/app/gym-website', icon: <Globe size={20} /> },
           { label: 'Club Settings', path: '/app/settings', icon: <Settings size={20} /> },
         ];
       case 'salon':

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const trainerSchema = new mongoose.Schema({
+const membershipPlanSchema = new mongoose.Schema({
   businessId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Business',
@@ -12,22 +12,23 @@ const trainerSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  photo: {
-    type: String,
-    default: ''
+  price: {
+    type: Number,
+    required: true,
+    min: 0
   },
-  specialization: {
+  duration: {
     type: String,
     required: true,
-    trim: true   // e.g. "Strength & Conditioning", "Yoga", "CrossFit"
+    trim: true   // e.g. "1 Month", "3 Months", "1 Year"
   },
-  experience: {
-    type: String,
-    default: ''  // e.g. "5+ Years", "3 Years"
-  },
-  bio: {
+  description: {
     type: String,
     default: ''
+  },
+  isPopular: {
+    type: Boolean,
+    default: false
   },
   isActive: {
     type: Boolean,
@@ -37,9 +38,9 @@ const trainerSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-trainerSchema.pre('save', function (next) {
+membershipPlanSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-module.exports = mongoose.model('Trainer', trainerSchema);
+module.exports = mongoose.model('MembershipPlan', membershipPlanSchema);

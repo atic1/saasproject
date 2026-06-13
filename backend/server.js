@@ -45,6 +45,7 @@ const serviceRoutes = require("./routes/serviceRoutes");
 const availabilityRoutes = require("./routes/availabilityRoutes");
 const portalRoutes = require("./routes/portalRoutes");
 const superadminRoutes = require("./routes/superadminRoutes");
+const gymWebsiteRoutes = require("./routes/gymWebsiteRoutes");
 
 const { auditTenantRequest } = require("./middleware/auditMiddleware");
 
@@ -72,6 +73,7 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/portal", portalRoutes);
 app.use("/api/superadmin", superadminRoutes);
+app.use("/api", gymWebsiteRoutes);
 //
 app.get("/", (req, res) => {
   res.send("Server running...");
