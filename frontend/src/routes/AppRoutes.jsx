@@ -34,6 +34,7 @@ import CustomerSpecificPortal from '../pages/portal/CustomerSpecificPortal';
 import PaymentSuccess from '../pages/portal/PaymentSuccess';
 import PaymentFailed from '../pages/portal/PaymentFailed';
 import PaymentPending from '../pages/portal/PaymentPending';
+import BusinessAuth from '../pages/portal/BusinessAuth';
 
 // Super Admin pages
 import SuperAdminLayout from '../components/SuperAdminLayout';
@@ -108,6 +109,8 @@ const AppRoutes = () => {
       {/* 5. CUSTOMER PORTAL & PAYMENTS CALLBACKS */}
       <Route path="/customer/:customerId/portal" element={<CustomerSpecificPortal />} />
       <Route path="/:slug/portal" element={<CustomerPortal />} />
+      <Route path="/:slug/login" element={<BusinessAuth mode="login" />} />
+      <Route path="/:slug/signup" element={<BusinessAuth mode="signup" />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-failed" element={<PaymentFailed />} />
       <Route path="/payment-pending" element={<PaymentPending />} />

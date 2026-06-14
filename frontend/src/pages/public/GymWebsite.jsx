@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   Phone, Mail, MapPin, Clock,
   Star, ChevronRight, Dumbbell, Zap, Heart, Target,
@@ -78,6 +79,7 @@ const Counter = ({ target, suffix = '' }) => {
 // ═══════════════════════════════════════════════════════════════
 const GymWebsite = () => {
   const { slug } = useParams();
+  const { isAuthenticated } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -254,9 +256,20 @@ const GymWebsite = () => {
                 {l.label}
               </button>
             ))}
-            <Link to={`/${slug}/portal`} className="gw-join-btn" style={{ ...S.navCta, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              Join Now <ChevronRight size={16} />
-            </Link>
+            {isAuthenticated ? (
+              <Link to={`/${slug}/portal`} className="gw-join-btn" style={{ ...S.navCta, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                Customer Portal <ChevronRight size={16} />
+              </Link>
+            ) : (
+              <>
+                <Link to={`/${slug}/login`} className="gw-nav-link-btn" style={{ ...S.navLink, marginRight: 8, display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
+                  Sign In
+                </Link>
+                <Link to={`/${slug}/signup`} className="gw-join-btn" style={{ ...S.navCta, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Join Now <ChevronRight size={16} />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Burger */}
@@ -271,9 +284,20 @@ const GymWebsite = () => {
             {navLinks.map(l => (
               <button key={l.id} style={S.mobileNavLink} onClick={() => scrollTo(l.id)}>{l.label}</button>
             ))}
-            <Link to={`/${slug}/portal`} style={{ ...S.mobileNavCta, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
-              Join Now
-            </Link>
+            {isAuthenticated ? (
+              <Link to={`/${slug}/portal`} style={{ ...S.mobileNavCta, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                Customer Portal
+              </Link>
+            ) : (
+              <>
+                <Link to={`/${slug}/login`} style={{ ...S.mobileNavLink, textDecoration: 'none', display: 'block', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  Sign In
+                </Link>
+                <Link to={`/${slug}/signup`} style={{ ...S.mobileNavCta, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                  Join Now
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>
@@ -298,8 +322,8 @@ const GymWebsite = () => {
           <p className="gw-hero-anim gw-hero-anim-d3" style={S.heroSub}>{description}</p>
 
           <div className="gw-hero-anim gw-hero-anim-d4" style={S.heroBtns}>
-            <Link to={`/${slug}/portal`} className="gw-join-btn" style={{ ...S.heroBtn, textDecoration: 'none' }}>
-              Start Today <ChevronRight size={18} />
+            <Link to={isAuthenticated ? `/${slug}/portal` : `/${slug}/signup`} className="gw-join-btn" style={{ ...S.heroBtn, textDecoration: 'none' }}>
+              {isAuthenticated ? "Go to Portal" : "Start Today"} <ChevronRight size={18} />
             </Link>
             <button style={S.heroBtnOutline} onClick={() => scrollTo('contact')}>
               Get in Touch
@@ -413,10 +437,10 @@ const GymWebsite = () => {
                   <h3 style={S.planName}>{plan.name}</h3>
                   {plan.description && <p style={S.planDesc}>{plan.description}</p>}
                   <Link
-                    to={`/${slug}/portal`}
+                    to={isAuthenticated ? `/${slug}/portal` : `/${slug}/signup`}
                     style={{ ...S.planBtn, ...(plan.isPopular ? S.planBtnPopular : {}), textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
-                    Get Started <ArrowRight size={16} />
+                    {isAuthenticated ? "View Portal" : "Get Started"} <ArrowRight size={16} />
                   </Link>
                 </div>
               ))}
@@ -728,11 +752,11 @@ const GymWebsite = () => {
                   Join {gymName} today and start your journey to a healthier, stronger you.
                 </p>
                 <Link
-                  to={`/${slug}/portal`}
+                  to={isAuthenticated ? `/${slug}/portal` : `/${slug}/signup`}
                   className="gw-join-btn"
                   style={{ ...S.contactCta, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
                 >
-                  Join Now <ArrowRight size={16} />
+                  {isAuthenticated ? "Go to Portal" : "Join Now"} <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
@@ -850,13 +874,13 @@ const GymWebsite = () => {
       </footer>
 
       {/* ── Floating "Join Now" CTA ── */}
-      <a
-        href={`/${slug}/portal`}
+      <Link
+        to={isAuthenticated ? `/${slug}/portal` : `/${slug}/signup`}
         className="gw-join-btn"
-        style={S.floatingCta}
+        style={{ ...S.floatingCta, textDecoration: 'none' }}
       >
-        <Dumbbell size={18} /> Join Now
-      </a>
+        <Dumbbell size={18} /> {isAuthenticated ? "Go to Portal" : "Join Now"}
+      </Link>
     </div>
   );
 };
