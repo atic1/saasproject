@@ -1,19 +1,17 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// These will be set by AuthContext after login
 let authToken = null;
 let activeBusinessId = null;
+let on401Callback = null;
 
 export const setAuthToken = (token) => { authToken = token; };
 export const setActiveBusinessId = (id) => { activeBusinessId = id; };
+export const setOn401Handler = (fn) => { on401Callback = fn; };
+
 export const clearAuthState = () => {
   authToken = null;
   activeBusinessId = null;
 };
-
-// Global 401 handler — set by AuthContext
-let on401Callback = null;
-export const setOn401Handler = (fn) => { on401Callback = fn; };
 
 const buildHeaders = (custom = {}) => ({
   'Content-Type': 'application/json',
@@ -27,11 +25,9 @@ const handleResponse = async (res) => {
     if (on401Callback) on401Callback();
     throw new Error('SESSION_EXPIRED');
   }
-
   if (res.status === 403) {
     throw new Error('ACCESS_DENIED');
   }
-
   if (res.status === 404) {
     throw new Error('NOT_FOUND');
   }
