@@ -46,4 +46,58 @@ router.get('/current/staff', protect, enforceTenant, async (req, res) => {
   }
 });
 
+// @route   PATCH /api/businesses/:id/features
+// @desc    Update feature flags for a business (tenant owner only)
+// @access  Private
+router.patch('/:id/features', protect, enforceTenant, async (req, res) => {
+  try {
+    const Business = require('../models/business');
+    const businessId = req.params.id;
+
+    // Ensure the requesting user owns this business
+    if (req.activeBusinessId?.toString() !== businessId) {
+      return res.status(403).json({ message: 'Access denied: business mismatch.' });
+    }
+
+    const { features } = req.body;
+    if (!features || typeof features !== 'object') {
+      return res.status(400).json({ message: 'features object is required.' });
+    }
+
+    // Only whitelist known feature keys — prevent arbitrary field injection
+    const ALLOWED_FEATURES = [
+      'booking','inventory','staffManagement','customerPortal','posBilling',
+      'analytics','multiBranch','customDomain',
+      // Gym Module 1
+      'memberProfiles','membershipTiers','attendanceTracking','equipmentTracker',
+      // Gym Module 2
+      'classScheduler','personalTrainerBooking','waitlistManagement','qrCheckIn',
+      // Gym Module 3
+      'autoRenewalBilling','promoDiscounts','onlinePayments','invoiceHistory',
+      // Gym Module 4
+      'workoutPlans','bodyMetrics','loyaltyRewards','smsEmailAlerts',
+      // Gym Module 5
+      'gymStore','nutritionPlans','reportsExport',
+    ];
+
+    const sanitized = {};
+    ALLOWED_FEATURES.forEach(key => {
+      if (key in features) sanitized[key] = !!features[key];
+    });
+
+    const updated = await Business.findByIdAndUpdate(
+      businessId,
+      { $set: Object.fromEntries(Object.entries(sanitized).map(([k, v]) => [`features.${k}`, v])) },
+      { new: true, runValidators: false }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'Business not found.' });
+
+    res.json({ message: 'Features updated successfully.', features: updated.features });
+  } catch (error) {
+    console.error('Error updating features:', error);
+    res.status(500).json({ message: 'Failed to update features.' });
+  }
+});
+
 module.exports = router;

@@ -11,7 +11,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: false,
       analytics: false,
-      customDomain: false
+      customDomain: false,
+      // 19 gym features (disabled on free)
+      memberProfiles: false,
+      membershipTiers: false,
+      attendanceTracking: false,
+      equipmentTracker: false,
+      classScheduler: false,
+      personalTrainerBooking: false,
+      waitlistManagement: false,
+      qrCheckIn: false,
+      autoRenewalBilling: false,
+      promoDiscounts: false,
+      onlinePayments: false,
+      invoiceHistory: false,
+      workoutPlans: false,
+      bodyMetrics: false,
+      loyaltyRewards: false,
+      smsEmailAlerts: false,
+      gymStore: false,
+      nutritionPlans: false,
+      reportsExport: false
     }
   },
   free_trial: {
@@ -26,7 +46,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: true,
       analytics: false,
-      customDomain: false
+      customDomain: false,
+      // 19 gym features (free_trial defaults)
+      memberProfiles: true,
+      membershipTiers: true,
+      attendanceTracking: true,
+      equipmentTracker: false,
+      classScheduler: true,
+      personalTrainerBooking: false,
+      waitlistManagement: false,
+      qrCheckIn: true,
+      autoRenewalBilling: true,
+      promoDiscounts: false,
+      onlinePayments: false,
+      invoiceHistory: true,
+      workoutPlans: false,
+      bodyMetrics: false,
+      loyaltyRewards: false,
+      smsEmailAlerts: true,
+      gymStore: false,
+      nutritionPlans: false,
+      reportsExport: false
     }
   },
   starter: {
@@ -41,7 +81,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: true,
       analytics: false,
-      customDomain: false
+      customDomain: false,
+      // 19 gym features (starter defaults)
+      memberProfiles: true,
+      membershipTiers: true,
+      attendanceTracking: true,
+      equipmentTracker: false,
+      classScheduler: true,
+      personalTrainerBooking: true,
+      waitlistManagement: false,
+      qrCheckIn: true,
+      autoRenewalBilling: true,
+      promoDiscounts: true,
+      onlinePayments: false,
+      invoiceHistory: true,
+      workoutPlans: true,
+      bodyMetrics: false,
+      loyaltyRewards: false,
+      smsEmailAlerts: true,
+      gymStore: false,
+      nutritionPlans: false,
+      reportsExport: false
     }
   },
   growth: {
@@ -56,7 +116,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: true,
       analytics: true,
-      customDomain: false
+      customDomain: false,
+      // 19 gym features (growth defaults)
+      memberProfiles: true,
+      membershipTiers: true,
+      attendanceTracking: true,
+      equipmentTracker: true,
+      classScheduler: true,
+      personalTrainerBooking: true,
+      waitlistManagement: true,
+      qrCheckIn: true,
+      autoRenewalBilling: true,
+      promoDiscounts: true,
+      onlinePayments: false,
+      invoiceHistory: true,
+      workoutPlans: true,
+      bodyMetrics: true,
+      loyaltyRewards: false,
+      smsEmailAlerts: true,
+      gymStore: false,
+      nutritionPlans: false,
+      reportsExport: true
     }
   },
   pro: {
@@ -71,7 +151,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: true,
       analytics: true,
-      customDomain: true
+      customDomain: true,
+      // 19 gym features (pro defaults)
+      memberProfiles: true,
+      membershipTiers: true,
+      attendanceTracking: true,
+      equipmentTracker: true,
+      classScheduler: true,
+      personalTrainerBooking: true,
+      waitlistManagement: true,
+      qrCheckIn: true,
+      autoRenewalBilling: true,
+      promoDiscounts: true,
+      onlinePayments: true,
+      invoiceHistory: true,
+      workoutPlans: true,
+      bodyMetrics: true,
+      loyaltyRewards: true,
+      smsEmailAlerts: true,
+      gymStore: true,
+      nutritionPlans: true,
+      reportsExport: true
     }
   },
   enterprise: {
@@ -86,7 +186,27 @@ const PLAN_DEFINITIONS = {
       booking: true,
       customerPortal: true,
       analytics: true,
-      customDomain: true
+      customDomain: true,
+      // 19 gym features (enterprise defaults)
+      memberProfiles: true,
+      membershipTiers: true,
+      attendanceTracking: true,
+      equipmentTracker: true,
+      classScheduler: true,
+      personalTrainerBooking: true,
+      waitlistManagement: true,
+      qrCheckIn: true,
+      autoRenewalBilling: true,
+      promoDiscounts: true,
+      onlinePayments: true,
+      invoiceHistory: true,
+      workoutPlans: true,
+      bodyMetrics: true,
+      loyaltyRewards: true,
+      smsEmailAlerts: true,
+      gymStore: true,
+      nutritionPlans: true,
+      reportsExport: true
     }
   }
 };
