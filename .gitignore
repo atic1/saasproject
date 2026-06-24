@@ -30,3 +30,8 @@ Thumbs.db
 # Misc
 *.pem
 coverage/
+
+node_modules/
+backend/node_modules/
+node_modules_backup/
+backend_node_modules_backup/
