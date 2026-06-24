@@ -558,6 +558,9 @@ const LandingPage = () => {
           padding: 80px 0;
         }
         .category-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
           margin-top: 40px;
         }
         .category-card {
@@ -740,6 +743,9 @@ const LandingPage = () => {
           padding: 80px 0;
         }
         .testimonial-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
           margin-top: 40px;
         }
         .testimonial-card {
@@ -886,6 +892,10 @@ const LandingPage = () => {
             text-align: center;
             padding: 40px 24px;
           }
+          .category-grid, .testimonial-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+          }
         }
         
         @media (max-width: 600px) {
@@ -905,6 +915,10 @@ const LandingPage = () => {
           }
           .pricing-cta-actions a {
             width: 100%;
+          }
+          .category-grid, .testimonial-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
           }
         }
       `}</style>

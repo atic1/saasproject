@@ -8,13 +8,13 @@ import { useAuth } from '../../context/AuthContext';
 // ── Static accent theme maps matching CustomerPortal ──────────
 const ACCENT = {
   gym: {
-    btn:           "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/30",
-    text:          "text-indigo-600 dark:text-indigo-400",
-    border:        "border-indigo-500",
-    ring:          "focus:ring-indigo-500/50",
-    gradient:      "from-indigo-600 via-indigo-500 to-blue-500",
-    badge:         "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400",
-    icon:          "text-indigo-500",
+    btn:           "bg-orange-600 hover:bg-orange-500 text-white shadow-orange-500/30",
+    text:          "text-orange-600 dark:text-orange-400",
+    border:        "border-orange-500",
+    ring:          "focus:ring-orange-500/50",
+    gradient:      "from-orange-600 via-orange-500 to-amber-500",
+    badge:         "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400",
+    icon:          "text-orange-500",
   },
   salon: {
     btn:           "bg-pink-600 hover:bg-pink-500 text-white shadow-pink-500/30",
@@ -161,10 +161,10 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/30 animate-pulse">
+            <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/30 animate-pulse">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <div className="absolute -inset-1 rounded-2xl bg-indigo-500/20 animate-ping" />
+            <div className="absolute -inset-1 rounded-2xl bg-purple-500/20 animate-ping" />
           </div>
           <div className="text-center">
             <p className="font-bold text-gray-900 dark:text-white">Loading Portal</p>
@@ -183,7 +183,7 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
         </div>
         <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Portal Not Found</h1>
         <p className="text-gray-500 max-w-md mb-8">{businessError || "The requested business portal does not exist."}</p>
-        <button onClick={() => navigate("/")} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold shadow-lg transition-all">Back to Home</button>
+        <button onClick={() => navigate("/")} className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold shadow-lg transition-all">Back to Home</button>
       </div>
     );
   }

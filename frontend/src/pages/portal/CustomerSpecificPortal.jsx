@@ -292,7 +292,7 @@ export default function CustomerSpecificPortal() {
                 {customer.membership?.planId?.name && (
                   <div>
                     <label className="text-gray-500 block text-xs">Subscribed Plan</label>
-                    <span className="font-black text-purple-400 block">{customer.membership.planId.name}</span>
+                    <span className={`font-black block ${a.textDark || a.text}`}>{customer.membership.planId.name}</span>
                   </div>
                 )}
               </div>
@@ -494,7 +494,7 @@ export default function CustomerSpecificPortal() {
                     placeholder="John Doe"
                     value={authForm.name}
                     onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
-                    className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-purple-600"
+                    className={`w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-${business.type === 'salon' ? 'pink-500' : business.type === 'clinic' ? 'emerald-500' : 'orange-500'}/40 focus:${a.border}`}
                   />
                 </div>
               )}
@@ -506,7 +506,7 @@ export default function CustomerSpecificPortal() {
                   placeholder="98XXXXXXXX"
                   value={authForm.phone}
                   onChange={e => setAuthForm({ ...authForm, phone: e.target.value })}
-                  className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-purple-600"
+                  className={`w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-${business.type === 'salon' ? 'pink-500' : business.type === 'clinic' ? 'emerald-500' : 'orange-500'}/40 focus:${a.border}`}
                 />
               </div>
 
@@ -517,7 +517,7 @@ export default function CustomerSpecificPortal() {
                   placeholder="john@example.com"
                   value={authForm.email}
                   onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
-                  className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-purple-600"
+                  className={`w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-${business.type === 'salon' ? 'pink-500' : business.type === 'clinic' ? 'emerald-500' : 'orange-500'}/40 focus:${a.border}`}
                 />
               </div>
 
@@ -528,13 +528,13 @@ export default function CustomerSpecificPortal() {
                   placeholder="••••••••"
                   value={authForm.password}
                   onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
-                  className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-purple-600"
+                  className={`w-full bg-gray-950 border border-gray-800 text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-${business.type === 'salon' ? 'pink-500' : business.type === 'clinic' ? 'emerald-500' : 'orange-500'}/40 focus:${a.border}`}
                 />
               </div>
 
               <button 
                 type="submit" disabled={authLoading}
-                className="w-full py-2.5 mt-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-1.5"
+                className={`w-full py-2.5 mt-2 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 ${a.btn}`}
               >
                 {authLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Continue Checkout</span>}
               </button>
@@ -620,8 +620,8 @@ export default function CustomerSpecificPortal() {
               <button 
                 onClick={handleCheckoutSubmit}
                 disabled={checkoutLoading}
-                className={`flex-1 py-2.5 rounded-xl text-white font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-1.5 ${
-                  payGateway === 'esewa' ? 'bg-green-600 hover:bg-green-500' : 'bg-purple-600 hover:bg-purple-500'
+                className={`flex-1 py-2.5 rounded-xl font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-1.5 ${
+                  payGateway === 'esewa' ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-500/30' : a.btn
                 }`}
               >
                 {checkoutLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Pay NPR {selectedInvoice.total}</span>}
