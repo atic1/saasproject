@@ -27,6 +27,7 @@ import Payments from '../pages/dashboard/Payments';
 import Reports from '../pages/dashboard/Reports';
 import SettingsPage from '../pages/dashboard/Settings';
 import GymWebsiteManager from '../pages/dashboard/GymWebsiteManager';
+import AppCenter from '../pages/dashboard/AppCenter';
 
 // Portal pages
 import CustomerPortal from '../pages/portal/CustomerPortal';
@@ -92,6 +93,7 @@ const AppRoutes = () => {
         <Route path="payments" element={<Payments />} />
         <Route path="reports" element={<Reports />} />
         <Route path="gym-website" element={<GymWebsiteManager />} />
+        <Route path="features" element={<AppCenter />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

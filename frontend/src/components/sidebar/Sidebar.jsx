@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, LayoutDashboard, Users, Calendar, CreditCard, 
   BarChart3, Settings, ShieldAlert, LogOut, Briefcase, 
-  Stethoscope, Dumbbell, Scissors, UserCheck, Shield, Globe
+  Stethoscope, Dumbbell, Scissors, UserCheck, Shield, Globe, LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -56,6 +56,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { label: 'Fee Payments', path: '/app/payments', icon: <CreditCard size={20} /> },
           { label: 'Growth Reports', path: '/app/reports', icon: <BarChart3 size={20} /> },
           { label: 'Gym Website', path: '/app/gym-website', icon: <Globe size={20} /> },
+          { label: 'App Center', path: '/app/features', icon: <LayoutGrid size={20} />, badge: 'NEW' },
           { label: 'Club Settings', path: '/app/settings', icon: <Settings size={20} /> },
         ];
       case 'salon':
@@ -118,6 +119,9 @@ const Sidebar = ({ isOpen, onClose }) => {
               >
                 <span className="link-icon">{link.icon}</span>
                 <span className="link-text">{link.label}</span>
+                {link.badge && (
+                  <span className="link-badge">{link.badge}</span>
+                )}
               </NavLink>
             </li>
           ))}
@@ -243,6 +247,18 @@ const Sidebar = ({ isOpen, onClose }) => {
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .link-badge {
+          margin-left: auto;
+          font-size: 0.6rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: hsla(var(--accent-gym), 0.15);
+          color: hsla(var(--accent-gym));
+          text-transform: uppercase;
         }
         
         /* Sidebar Footer */

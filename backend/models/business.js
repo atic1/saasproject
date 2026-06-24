@@ -146,7 +146,7 @@ const businessSchema = new mongoose.Schema({
     }
   },
   
-  // Feature Flags
+  // Feature Flags (core)
   features: {
     booking: { type: Boolean, default: true },
     inventory: { type: Boolean, default: false },
@@ -155,7 +155,76 @@ const businessSchema = new mongoose.Schema({
     posBilling: { type: Boolean, default: true },
     analytics: { type: Boolean, default: false },
     multiBranch: { type: Boolean, default: false },
-    customDomain: { type: Boolean, default: false }
+    customDomain: { type: Boolean, default: false },
+
+    // ── Module 1: Member Management ─────────────────────────────────────────
+    memberProfiles:        { type: Boolean, default: true  },  // Digital member cards / profiles
+    membershipTiers:       { type: Boolean, default: true  },  // Multi-tier plan management
+    attendanceTracking:    { type: Boolean, default: true  },  // QR / biometric check-in log
+    equipmentTracker:      { type: Boolean, default: false },  // Equipment inventory & maintenance
+
+    // ── Module 2: Booking & Attendance ──────────────────────────────────────
+    classScheduler:        { type: Boolean, default: true  },  // Visual class timetable
+    personalTrainerBooking:{ type: Boolean, default: false },  // PT session scheduling
+    waitlistManagement:    { type: Boolean, default: false },  // Auto waitlist for full classes
+    qrCheckIn:             { type: Boolean, default: true  },  // QR code member check-in
+
+    // ── Module 3: Subscription & Billing ────────────────────────────────────
+    autoRenewalBilling:    { type: Boolean, default: true  },  // Automated recurring billing
+    promoDiscounts:        { type: Boolean, default: false },  // Coupon & promo code engine
+    onlinePayments:        { type: Boolean, default: false },  // eSewa / Khalti online payments
+    invoiceHistory:        { type: Boolean, default: true  },  // Member invoice history portal
+
+    // ── Module 4: Engagement & Retention ────────────────────────────────────
+    workoutPlans:          { type: Boolean, default: false },  // Trainer-assigned workout plans
+    bodyMetrics:           { type: Boolean, default: false },  // Body measurement & progress tracking
+    loyaltyRewards:        { type: Boolean, default: false },  // Points-based loyalty program
+    smsEmailAlerts:        { type: Boolean, default: true  },  // SMS / Email notification blasts
+
+    // ── Module 5: Commerce & Operations ─────────────────────────────────────
+    gymStore:              { type: Boolean, default: false },  // In-gym supplement / merchandise store
+    nutritionPlans:        { type: Boolean, default: false },  // Dietitian nutrition plan builder
+    reportsExport:         { type: Boolean, default: false },  // Advanced CSV / PDF report exports
+  },
+
+  // ── Gym-Specific Data Collections ────────────────────────────────────────
+  gymSettings: {
+    // Class timetable template slots (per week)
+    classTimetable: [{
+      day:       { type: String, enum: ['sun','mon','tue','wed','thu','fri','sat'] },
+      className: String,
+      instructor: String,
+      startTime: String,
+      endTime:   String,
+      capacity:  { type: Number, default: 20 },
+      enrolled:  { type: Number, default: 0 }
+    }],
+    // Equipment catalogue
+    equipment: [{
+      name:          String,
+      category:      String,
+      quantity:      { type: Number, default: 1 },
+      condition:     { type: String, enum: ['excellent','good','fair','repair'], default: 'good' },
+      lastServiced:  Date,
+      nextService:   Date
+    }],
+    // Active promo codes
+    promoCodes: [{
+      code:       { type: String, uppercase: true },
+      discount:   Number,       // percentage or flat
+      type:       { type: String, enum: ['percent','flat'], default: 'percent' },
+      expiresAt:  Date,
+      usageLimit: { type: Number, default: 100 },
+      usedCount:  { type: Number, default: 0 },
+      active:     { type: Boolean, default: true }
+    }],
+    // Loyalty program config
+    loyaltyConfig: {
+      pointsPerVisit:  { type: Number, default: 10 },
+      pointsPerNPR:    { type: Number, default: 1 },
+      redeemRate:      { type: Number, default: 100 },  // 100 pts = NPR 1
+      enabled:         { type: Boolean, default: false }
+    }
   },
   
   // Custom Domain (premium)
