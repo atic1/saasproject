@@ -40,7 +40,7 @@ const membershipPlanSchema = new mongoose.Schema({
 
 membershipPlanSchema.pre('save', function (next) {
   this.updatedAt = new Date();
-  next();
+  if (typeof next === 'function') next();
 });
 
 module.exports = mongoose.model('MembershipPlan', membershipPlanSchema);
