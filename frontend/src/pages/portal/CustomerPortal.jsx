@@ -11,23 +11,23 @@ import {
 // ── Static accent theme maps (required for Tailwind JIT compilation) ──────────
 const ACCENT = {
   gym: {
-    btn:           "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/30",
-    btnSolid:      "bg-indigo-600 hover:bg-indigo-500 text-white",
-    text:          "text-indigo-600",
-    textDark:      "dark:text-indigo-400",
-    bg:            "bg-indigo-50",
-    bgDark:        "dark:bg-indigo-950/30",
-    border:        "border-indigo-500",
-    borderLight:   "border-indigo-200",
-    ring:          "ring-indigo-500",
-    slotActive:    "bg-indigo-600 border-indigo-600 text-white",
-    slotInactive:  "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20",
-    tabActive:     "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400",
-    payActive:     "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-500 text-indigo-700 dark:text-indigo-400",
-    gradient:      "from-indigo-600 via-indigo-500 to-blue-500",
-    gradientLight: "from-indigo-50 to-blue-50",
-    icon:          "text-indigo-500",
-    badge:         "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400",
+    btn:           "bg-orange-600 hover:bg-orange-500 text-white shadow-orange-500/30",
+    btnSolid:      "bg-orange-600 hover:bg-orange-500 text-white",
+    text:          "text-orange-600",
+    textDark:      "dark:text-orange-400",
+    bg:            "bg-orange-50",
+    bgDark:        "dark:bg-orange-950/30",
+    border:        "border-orange-500",
+    borderLight:   "border-orange-200",
+    ring:          "ring-orange-500",
+    slotActive:    "bg-orange-600 border-orange-600 text-white",
+    slotInactive:  "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-orange-950/20",
+    tabActive:     "bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400",
+    payActive:     "bg-orange-50 dark:bg-orange-950/20 border-orange-500 text-orange-700 dark:text-orange-400",
+    gradient:      "from-orange-600 via-orange-500 to-amber-500",
+    gradientLight: "from-orange-50 to-amber-50",
+    icon:          "text-orange-500",
+    badge:         "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400",
   },
   salon: {
     btn:           "bg-pink-600 hover:bg-pink-500 text-white shadow-pink-500/30",
@@ -414,10 +414,10 @@ export default function CustomerPortal() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/30 animate-pulse">
+            <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/30 animate-pulse">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <div className="absolute -inset-1 rounded-2xl bg-indigo-500/20 animate-ping" />
+            <div className="absolute -inset-1 rounded-2xl bg-purple-500/20 animate-ping" />
           </div>
           <div className="text-center">
             <p className="font-bold text-gray-900 dark:text-white">Loading Portal</p>
@@ -446,7 +446,7 @@ export default function CustomerPortal() {
   const typeIcon  = BUSINESS_TYPE_ICONS[business.type] || "🏢";
 
   // Shared input class
-  const inputCls = "w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-600/50 text-sm transition-all";
+  const inputCls = `w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:${a.ring}/50 text-sm transition-all`;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -643,13 +643,13 @@ export default function CustomerPortal() {
               <div className="space-y-4">
                 {loadingData ? (
                   <div className="flex flex-col items-center py-16 gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                    <Loader2 className={`h-8 w-8 animate-spin ${a.text}`} />
                     <p className="text-sm text-gray-400">Loading your bookings...</p>
                   </div>
                 ) : bookings.length === 0 ? (
                   <div className="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center border border-gray-100 dark:border-gray-800">
-                    <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Calendar className="h-8 w-8 text-indigo-400" />
+                    <div className={`w-16 h-16 ${a.bg} ${a.bgDark} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                      <Calendar className={`h-8 w-8 ${a.textDark || a.icon}`} />
                     </div>
                     <h4 className="text-lg font-bold text-gray-900 dark:text-white">No Appointments Yet</h4>
                     <p className="text-sm text-gray-500 mt-1 mb-6">You haven't scheduled any appointments with us yet.</p>
@@ -723,8 +723,8 @@ export default function CustomerPortal() {
             {/* QR Check-in Tab */}
             {activeTab === "qr_checkin" && (
               <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center mb-4">
-                  <QrCode className="h-8 w-8 text-indigo-500" />
+                <div className={`w-16 h-16 ${a.bg} ${a.bgDark} rounded-2xl flex items-center justify-center mb-4`}>
+                  <QrCode className={`h-8 w-8 ${a.text}`} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Contactless QR Check-in</h3>
                 <p className="text-sm text-gray-500 max-w-sm mt-1 mb-6">
@@ -740,11 +740,11 @@ export default function CustomerPortal() {
                       <path d="M65,5 h25 v25 h-25 z M72,12 h11 v11 h-11 z" fill="black" />
                       <path d="M5,65 h25 v25 h-25 z M12,72 h11 v11 h-11 z" fill="black" />
                       <path d="M40,10 h10 v5 h-10 z M45,20 h10 v5 h-10 z M35,35 h15 v5 h-15 z M80,40 h10 v10 h-10 z M55,50 h15 v5 h-15 z M40,60 h10 v10 h-10 z M65,65 h10 v10 h-10 z M80,80 h10 v10 h-10 z M45,80 h20 v5 h-20 z" fill="black" />
-                      <circle cx="50" cy="50" r="12" className="fill-indigo-600 animate-pulse" />
+                      <circle cx="50" cy="50" r="12" className={`fill-current ${a.text} animate-pulse`} />
                       <path d="M48,46 h4 v8 h-4 z" fill="white" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="text-[10px] font-bold bg-white text-indigo-600 px-1.5 py-0.5 rounded shadow">KEY-{qrRefreshKey}</span>
+                      <span className={`text-[10px] font-bold bg-white ${a.text} px-1.5 py-0.5 rounded shadow`}>KEY-{qrRefreshKey}</span>
                     </div>
                   </div>
 
@@ -755,7 +755,7 @@ export default function CustomerPortal() {
                     </span>
                     <button 
                       onClick={handleRefreshQr}
-                      className="text-xs text-indigo-500 hover:text-indigo-400 font-bold"
+                      className={`text-xs ${a.text} hover:opacity-85 font-bold`}
                     >
                       Refresh
                     </button>
@@ -826,7 +826,7 @@ export default function CustomerPortal() {
                       return (
                         <div key={cls.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-all">
                           <div className="flex items-start gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-lg flex-shrink-0">
+                            <div className={`w-10 h-10 rounded-xl ${a.bg} ${a.bgDark} flex items-center justify-center text-lg flex-shrink-0`}>
                               🏋️
                             </div>
                             <div>
@@ -907,14 +907,14 @@ export default function CustomerPortal() {
 
                       <div className="space-y-2">
                         {routine.exercises.map((ex, idx) => (
-                          <div key={idx} className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-indigo-100 dark:hover:border-indigo-950/20 transition-all">
+                          <div key={idx} className="flex justify-between items-center py-2.5 px-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-orange-100 dark:hover:border-orange-950/20 transition-all">
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => handleToggleExerciseDone(routine.id, idx)}
                                 className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                   ex.done
-                                    ? "bg-indigo-600 border-indigo-600 text-white"
-                                    : "border-gray-300 dark:border-gray-600 hover:border-indigo-500"
+                                    ? "bg-orange-600 border-orange-600 text-white"
+                                    : "border-gray-300 dark:border-gray-600 hover:border-orange-500"
                                 }`}
                               >
                                 {ex.done && <Check size={12} />}
@@ -925,7 +925,7 @@ export default function CustomerPortal() {
                             </div>
                             <div className="flex items-center gap-4 text-xs">
                               <span className="text-gray-400">{ex.sets} sets × {ex.reps}</span>
-                              <span className="font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-lg text-[10px]">
+                              <span className="font-bold text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-lg text-[10px]">
                                 {ex.weight}
                               </span>
                             </div>
@@ -957,8 +957,8 @@ export default function CustomerPortal() {
                       <svg className="w-full h-full" viewBox="0 0 500 200" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.4" />
-                            <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.0" />
+                            <stop offset="0%" stopColor="#EA580C" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="#EA580C" stopOpacity="0.0" />
                           </linearGradient>
                         </defs>
                         <line x1="0" y1="50" x2="500" y2="50" stroke="#E5E7EB" strokeWidth="0.5" className="dark:stroke-gray-800" strokeDasharray="3" />
@@ -1060,7 +1060,7 @@ export default function CustomerPortal() {
               <div className="space-y-4">
                 {loadingData ? (
                   <div className="flex flex-col items-center py-16 gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                    <Loader2 className={`h-8 w-8 animate-spin ${a.text}`} />
                     <p className="text-sm text-gray-400">Loading invoices...</p>
                   </div>
                 ) : bookings.filter(b => b.invoice).length === 0 ? (

@@ -84,7 +84,7 @@ const Features = () => {
       </div>
 
       {/* Dynamic Feature Block */}
-      <section className="vertical-feature-section glass animate-slide-up">
+      <section className="vertical-feature-section glass animate-slide-up" key={activeTab}>
         <div className="feature-text-col">
           <span className="feature-badge" style={{ color: currentModule.color, backgroundColor: `rgba(from ${currentModule.color} r g b / 0.1)` }}>
             {currentModule.badge}
@@ -115,54 +115,6 @@ const Features = () => {
             <ArrowRight size={18} />
           </Link>
         </div>
-
-        <div className="feature-visual-col">
-          {/* visual container showing mock database structure */}
-          <div className="db-mock-card glass">
-            <div className="db-header">
-              <Database size={20} style={{ color: currentModule.color }} />
-              <h4>Dynamic Tenant Schema</h4>
-              <span className="db-badge">System Synced</span>
-            </div>
-            <div className="db-lines">
-              <div className="db-row">
-                <span className="lbl">tenant_id</span>
-                <span className="val text-muted">"tenant_saas_09"</span>
-              </div>
-              <div className="db-row">
-                <span className="lbl">business_type</span>
-                <span className="val" style={{ color: currentModule.color }}>"{activeTab}"</span>
-              </div>
-              <div className="db-row">
-                <span className="lbl">active_modules</span>
-                <span className="val text-muted">["crm", "scheduler", "billing"]</span>
-              </div>
-              <div className="db-row-nested">
-                <div className="nested-header">{activeTab.toUpperCase()} METADATA</div>
-                <div className="nested-body">
-                  {activeTab === 'gym' && (
-                    <>
-                      <div><span>gate_hardware:</span> <span>"synced"</span></div>
-                      <div><span>active_trainers:</span> <span>4</span></div>
-                    </>
-                  )}
-                  {activeTab === 'salon' && (
-                    <>
-                      <div><span>stylists_commission:</span> <span>"enabled"</span></div>
-                      <div><span>sms_reminders:</span> <span>"configured"</span></div>
-                    </>
-                  )}
-                  {activeTab === 'clinic' && (
-                    <>
-                      <div><span>hipaa_compliant:</span> <span>"verified"</span></div>
-                      <div><span>insurance_claims:</span> <span>"enabled"</span></div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Shared Global Infrastructure */}
@@ -173,7 +125,7 @@ const Features = () => {
           <p>Behind our specialized vertical modules lies a rock-solid, enterprise-grade core designed for fast, seamless multi-branch management.</p>
         </div>
 
-        <div className="grid-cols-3 infra-grid">
+        <div className="infra-grid">
           <div className="infra-card glass">
             <ShieldCheck size={36} className="infra-icon" />
             <h3>Shared Authentication</h3>
@@ -249,12 +201,9 @@ const Features = () => {
         /* Feature block */
         .vertical-feature-section {
           border-radius: var(--radius-xl);
-          padding: 60px;
-          display: grid;
-          grid-template-columns: 1.1fr 0.9fr;
-          gap: 60px;
-          align-items: center;
-          margin-bottom: 100px;
+          padding: 60px 80px;
+          max-width: 860px;
+          margin: 0 auto 80px;
         }
         .feature-badge {
           display: inline-block;
@@ -305,75 +254,22 @@ const Features = () => {
           stroke: white;
         }
         
-        /* Db mockup */
-        .db-mock-card {
-          border-radius: var(--radius-lg);
-          padding: 30px;
-          box-shadow: var(--shadow-premium);
-        }
-        .db-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 24px;
-        }
-        .db-header h4 { font-size: 1rem; flex: 1; }
-        .db-badge {
-          font-size: 0.65rem;
-          font-weight: 800;
-          color: hsla(var(--text-muted));
-          background-color: hsla(var(--border), 0.5);
-          padding: 2px 8px;
-          border-radius: 4px;
-        }
-        
-        .db-lines {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          font-family: ui-monospace, monospace;
-          font-size: 0.85rem;
-        }
-        .db-row {
-          display: flex;
-          justify-content: space-between;
-          border-bottom: 1px solid hsla(var(--border-frosted));
-          padding-bottom: 8px;
-        }
-        .db-row .lbl { color: hsla(var(--text-muted)); }
-        .db-row .val { font-weight: 600; }
-        
-        .db-row-nested {
-          border: 1px solid hsla(var(--border));
-          border-radius: var(--radius-sm);
-          background-color: hsla(var(--bg-base), 0.4);
-          overflow: hidden;
-        }
-        .nested-header {
-          background-color: hsla(var(--border), 0.4);
-          padding: 6px 12px;
-          font-size: 0.7rem;
-          font-weight: 800;
-          color: hsla(var(--text-muted));
-        }
-        .nested-body {
-          padding: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .nested-body div {
-          display: flex;
-          justify-content: space-between;
-        }
-        .nested-body span:first-child { color: hsla(var(--text-muted)); }
-        
+
         /* Shared infra */
         .shared-infrastructure {
           padding-top: 40px;
         }
         .infra-grid {
           margin-top: 40px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+        }
+        @media (max-width: 900px) {
+          .infra-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+          .infra-grid { grid-template-columns: 1fr; }
         }
         .infra-card {
           border-radius: var(--radius-lg);
@@ -402,8 +298,6 @@ const Features = () => {
         
         @media (max-width: 1024px) {
           .vertical-feature-section {
-            grid-template-columns: 1fr;
-            gap: 40px;
             padding: 40px 24px;
           }
         }

@@ -645,13 +645,19 @@ const Bookings = () => {
         }
 
         .action-select {
-          padding: 6px 10px;
-          border: 1px solid hsla(var(--border-frosted));
+          padding: 8px 12px;
+          border: 1px solid hsl(var(--border));
           border-radius: var(--radius-sm);
-          background: hsla(var(--surface-secondary));
-          color: hsla(var(--text-main));
+          background: hsl(var(--bg-surface));
+          color: hsl(var(--text-main));
           cursor: pointer;
-          font-size: 12px;
+          font-size: 13px;
+          outline: none;
+          transition: border-color var(--transition-fast);
+        }
+
+        .action-select:focus {
+          border-color: hsl(var(--primary));
         }
 
         .action-btn {
@@ -659,12 +665,12 @@ const Bookings = () => {
           border: none;
           background: transparent;
           cursor: pointer;
-          color: hsla(var(--text-muted));
+          color: hsl(var(--text-muted));
           transition: all 0.2s;
         }
 
         .action-btn:hover:not(:disabled) {
-          color: hsla(0, 100%, 50%);
+          color: hsl(0 100% 50%);
         }
 
         .action-btn:disabled {
@@ -678,7 +684,8 @@ const Bookings = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -686,21 +693,22 @@ const Bookings = () => {
         }
 
         .modal-content {
-          background: hsla(var(--surface-primary));
-          padding: 24px;
-          border-radius: var(--radius-md);
-          max-width: 400px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          background: hsl(var(--bg-surface));
+          border: 1px solid hsl(var(--border));
+          padding: 28px;
+          border-radius: var(--radius-lg);
+          max-width: 500px;
+          box-shadow: var(--shadow-premium);
         }
 
         .modal-content h3 {
           margin-bottom: 12px;
-          color: hsla(var(--text-main));
+          color: hsl(var(--text-main));
         }
 
         .modal-content p {
           margin-bottom: 24px;
-          color: hsla(var(--text-body));
+          color: hsl(var(--text-body));
         }
 
         .modal-actions {
@@ -710,12 +718,71 @@ const Bookings = () => {
         }
 
         .btn-danger {
-          background: hsla(0, 100%, 50%, 0.9);
+          background: hsl(0 100% 50% / 0.9);
           color: white;
         }
 
         .btn-danger:hover:not(:disabled) {
-          background: hsla(0, 100%, 50%);
+          background: hsl(0 100% 50%);
+        }
+
+        /* Business Accent Badges */
+        .badge-gym, .table-badge.badge-gym {
+          background-color: hsl(var(--accent-gym) / 0.15) !important;
+          color: hsl(var(--accent-gym)) !important;
+        }
+        .badge-salon, .table-badge.badge-salon {
+          background-color: hsl(var(--accent-salon) / 0.15) !important;
+          color: hsl(var(--accent-salon)) !important;
+        }
+        .badge-clinic, .table-badge.badge-clinic {
+          background-color: hsl(var(--accent-clinic) / 0.15) !important;
+          color: hsl(var(--accent-clinic)) !important;
+        }
+        .badge-admin, .table-badge.badge-admin {
+          background-color: hsl(var(--primary) / 0.15) !important;
+          color: hsl(var(--primary)) !important;
+        }
+
+        /* Business Accent Buttons */
+        .btn-gym {
+          background-color: hsl(var(--accent-gym)) !important;
+          color: #fff !important;
+          box-shadow: 0 4px 12px hsl(var(--accent-gym) / 0.3) !important;
+        }
+        .btn-gym:hover:not(:disabled) {
+          background-color: hsl(var(--accent-gym) / 0.9) !important;
+          transform: translateY(-1px);
+        }
+        .btn-salon {
+          background-color: hsl(var(--accent-salon)) !important;
+          color: #fff !important;
+          box-shadow: 0 4px 12px hsl(var(--accent-salon) / 0.3) !important;
+          border-color: transparent !important;
+        }
+        .btn-salon:hover:not(:disabled) {
+          background-color: hsl(var(--accent-salon) / 0.9) !important;
+          transform: translateY(-1px);
+        }
+        .btn-clinic {
+          background-color: hsl(var(--accent-clinic)) !important;
+          color: #fff !important;
+          box-shadow: 0 4px 12px hsl(var(--accent-clinic) / 0.3) !important;
+          border-color: transparent !important;
+        }
+        .btn-clinic:hover:not(:disabled) {
+          background-color: hsl(var(--accent-clinic) / 0.9) !important;
+          transform: translateY(-1px);
+        }
+        .btn-admin {
+          background-color: hsl(var(--primary)) !important;
+          color: #fff !important;
+          box-shadow: 0 4px 12px hsl(var(--primary) / 0.3) !important;
+          border-color: transparent !important;
+        }
+        .btn-admin:hover:not(:disabled) {
+          background-color: hsl(var(--primary-hover)) !important;
+          transform: translateY(-1px);
         }
       `}</style>
     </div>
