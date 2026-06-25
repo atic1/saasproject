@@ -39,7 +39,7 @@ const trainerSchema = new mongoose.Schema({
 
 trainerSchema.pre('save', function (next) {
   this.updatedAt = new Date();
-  next();
+  if (typeof next === 'function') next();
 });
 
 module.exports = mongoose.model('Trainer', trainerSchema);

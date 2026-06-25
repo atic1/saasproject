@@ -90,7 +90,11 @@ const GymWebsite = () => {
   const [reviewsList, setReviewsList] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const [activeGalleryIdx, setActiveGalleryIdx] = useState(null);
+  const [showOfferPopup, setShowOfferPopup] = useState(false);
+  const [popupDismissed, setPopupDismissed] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const heroRef = useRef(null);
+  const popupTimerRef = useRef(null);
 
   // Scroll listener for sticky nav effect
   useEffect(() => {
@@ -117,6 +121,16 @@ const GymWebsite = () => {
     };
     fetchGym();
   }, [slug]);
+
+  const offers = data?.offers || [];
+
+  // Show offers popup after 3 s (only if there are active offers)
+  useEffect(() => {
+    if (offers.length > 0 && !popupDismissed) {
+      popupTimerRef.current = setTimeout(() => setShowOfferPopup(true), 3000);
+    }
+    return () => clearTimeout(popupTimerRef.current);
+  }, [offers, popupDismissed]);
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -160,6 +174,18 @@ const GymWebsite = () => {
     setMobileMenuOpen(false);
   };
 
+  const dismissPopup = () => {
+    setShowOfferPopup(false);
+    setPopupDismissed(true);
+  };
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2500);
+    });
+  };
+
   const navLinks = [
     { label: 'About',      id: 'about' },
     plans.length > 0    ? { label: 'Plans',     id: 'plans'     } : null,
@@ -201,6 +227,10 @@ const GymWebsite = () => {
           0%   { background-position: 0% 50%; }
           50%  { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
+        }
+        @keyframes gwPopupSlideIn {
+          from { opacity: 0; transform: translateY(32px) scale(0.92); }
+          to   { opacity: 1; transform: translateY(0)     scale(1);    }
         }
         .gw-hero-anim { animation: fadeUp 0.9s ease both; }
         .gw-hero-anim-d1 { animation-delay: 0.1s; }
@@ -881,6 +911,98 @@ const GymWebsite = () => {
       >
         <Dumbbell size={18} /> {isAuthenticated ? "Go to Portal" : "Join Now"}
       </Link>
+
+      {/* ── Offers Popup ── */}
+      {showOfferPopup && offers.length > 0 && (
+        <OffersPopup
+          offer={offers[0]}
+          gymName={gymName}
+          onClose={dismissPopup}
+          onViewPlans={() => { scrollTo('plans'); dismissPopup(); }}
+          codeCopied={codeCopied}
+          onCopyCode={copyCode}
+        />
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  OFFERS POPUP COMPONENT
+// ═══════════════════════════════════════════════════════════════
+const OffersPopup = ({ offer, gymName, onClose, onViewPlans, codeCopied, onCopyCode }) => {
+  const discountLabel = offer.discount?.type === 'percentage'
+    ? `${offer.discount.value}% OFF`
+    : offer.discount?.type === 'fixed_amount'
+      ? `Rs ${offer.discount.value} OFF`
+      : offer.discount?.type === 'free_trial'
+        ? 'FREE Trial'
+        : 'Special Offer';
+
+  const endDate = offer.validity?.endDate
+    ? new Date(offer.validity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
+
+  return (
+    <div style={SP.overlay}>
+      <div style={SP.popup} className="gw-offer-popup">
+        {/* Close button */}
+        <button style={SP.closeBtn} onClick={onClose}>
+          <X size={18} />
+        </button>
+
+        {/* Glowing orb */}
+        <div style={SP.orb} />
+
+        {/* Badge */}
+        <div style={SP.badge}>
+          <Zap size={12} /> Limited Time Offer
+        </div>
+
+        {/* Discount highlight */}
+        <div style={SP.discountRing}>
+          <span style={SP.discountNum}>{discountLabel}</span>
+        </div>
+
+        {/* Title */}
+        <h3 style={SP.title}>{offer.name}</h3>
+        {offer.description && (
+          <p style={SP.desc}>{offer.description}</p>
+        )}
+
+        {/* Promo code */}
+        {offer.code && (
+          <div style={SP.codeWrap}>
+            <span style={SP.codeLabel}>Use Code</span>
+            <div style={SP.codeRow}>
+              <code style={SP.code}>{offer.code}</code>
+              <button
+                style={{ ...SP.copyBtn, ...(codeCopied ? SP.copyBtnDone : {}) }}
+                onClick={() => onCopyCode(offer.code)}
+              >
+                {codeCopied ? <><CheckCircle size={14} /> Copied!</> : <><Copy size={14} /> Copy</>}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Validity */}
+        {endDate && (
+          <div style={SP.validity}>
+            <Clock size={13} /> Expires {endDate}
+          </div>
+        )}
+
+        {/* CTA buttons */}
+        <div style={SP.ctaRow}>
+          <button style={SP.ctaBtn} onClick={onViewPlans}>
+            View Plans <ArrowRight size={15} />
+          </button>
+          <button style={SP.dismissBtn} onClick={onClose}>
+            Maybe Later
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -888,6 +1010,101 @@ const GymWebsite = () => {
 // ═══════════════════════════════════════════════════════════════
 //  STYLES
 // ═══════════════════════════════════════════════════════════════
+const SP = {
+  overlay: {
+    position: 'fixed', bottom: 100, right: 28, zIndex: 9998,
+    animation: 'gwPopupSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both'
+  },
+  popup: {
+    position: 'relative', overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,12,41,0.98) 0%, rgba(30,27,75,0.98) 100%)',
+    backdropFilter: 'blur(24px)',
+    border: '1px solid rgba(99,102,241,0.35)',
+    borderRadius: 24,
+    padding: '32px 28px 24px',
+    width: 320,
+    boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
+  },
+  orb: {
+    position: 'absolute', top: -40, right: -40,
+    width: 160, height: 160, borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)',
+    pointerEvents: 'none'
+  },
+  closeBtn: {
+    position: 'absolute', top: 14, right: 14,
+    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 8, padding: '5px 7px', cursor: 'pointer', color: '#9ca3af',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all 0.2s', lineHeight: 1
+  },
+  badge: {
+    display: 'inline-flex', alignItems: 'center', gap: 5,
+    background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)',
+    color: '#fbbf24', borderRadius: 99, padding: '4px 12px',
+    fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+    marginBottom: 16
+  },
+  discountRing: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 110, height: 110, borderRadius: '50%', margin: '0 auto 16px',
+    background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))',
+    border: '3px solid rgba(99,102,241,0.5)',
+    boxShadow: '0 0 32px rgba(99,102,241,0.35), inset 0 0 20px rgba(99,102,241,0.1)'
+  },
+  discountNum: {
+    color: '#fff', fontSize: '1.5rem', fontWeight: 900, textAlign: 'center', lineHeight: 1.1
+  },
+  title: {
+    color: '#fff', fontSize: '1.1rem', fontWeight: 800,
+    textAlign: 'center', marginBottom: 6, lineHeight: 1.3
+  },
+  desc: {
+    color: '#9ca3af', fontSize: '0.82rem', lineHeight: 1.6,
+    textAlign: 'center', marginBottom: 16
+  },
+  codeWrap: {
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 12, padding: '12px 14px', marginBottom: 12
+  },
+  codeLabel: {
+    display: 'block', color: '#6b7280', fontSize: '0.7rem', fontWeight: 700,
+    textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6
+  },
+  codeRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  code: {
+    color: '#a5b4fc', fontSize: '1.05rem', fontWeight: 900,
+    letterSpacing: '0.12em', fontFamily: 'monospace'
+  },
+  copyBtn: {
+    display: 'inline-flex', alignItems: 'center', gap: 5,
+    background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
+    color: '#a5b4fc', borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
+    fontSize: '0.75rem', fontWeight: 700, fontFamily: 'inherit', transition: 'all 0.2s'
+  },
+  copyBtnDone: {
+    background: 'rgba(16,185,129,0.15)', borderColor: 'rgba(16,185,129,0.3)', color: '#34d399'
+  },
+  validity: {
+    display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center',
+    color: '#6b7280', fontSize: '0.77rem', fontWeight: 600, marginBottom: 16
+  },
+  ctaRow: { display: 'flex', flexDirection: 'column', gap: 8 },
+  ctaBtn: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+    border: 'none', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
+    padding: '12px 20px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+    boxShadow: '0 6px 20px rgba(99,102,241,0.4)', transition: 'all 0.2s'
+  },
+  dismissBtn: {
+    background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+    color: '#6b7280', fontWeight: 600, fontSize: '0.82rem',
+    padding: '9px 20px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+    transition: 'all 0.2s'
+  }
+};
+
 const S = {
   root: {
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
