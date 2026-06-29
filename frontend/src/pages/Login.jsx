@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 
 const Login = () => {
@@ -23,7 +25,7 @@ const handleLogin = async (e) => {
       payload.username = username; // backend should accept username field
     }
 
-    const response = await fetch('http://localhost:5000/api/auth/login', {
+    const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Clock, CheckCircle, XCircle, Trash2, Building2, Mail,
   Phone, MapPin, CalendarDays, RefreshCw, AlertTriangle, User
@@ -46,7 +48,7 @@ const SuperAdminPendingPage = () => {
 
   const fetchPending = useCallback(() => {
     setLoading(true);
-    fetch('http://localhost:5000/api/superadmin/businesses?status=pending', {
+    fetch(`${API_BASE}/api/superadmin/businesses?status=pending`, {
       headers: { 'x-user-role': 'super_admin' }
     })
       .then(r => r.json())
@@ -59,7 +61,7 @@ const SuperAdminPendingPage = () => {
   const handleStatusChange = async (id, status, businessName) => {
     setActionLoading(id + status);
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/businesses/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/superadmin/businesses/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-user-role': 'super_admin' },
         body: JSON.stringify({ status })
@@ -85,7 +87,7 @@ const SuperAdminPendingPage = () => {
     setConfirmModal(null);
     setActionLoading(id + 'delete');
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/businesses/${id}`, {
+      const res = await fetch(`${API_BASE}/api/superadmin/businesses/${id}`, {
         method: 'DELETE',
         headers: { 'x-user-role': 'super_admin' }
       });

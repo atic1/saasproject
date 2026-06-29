@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { Link } from 'react-router-dom';
 import {
   Building2, CheckCircle, Clock, XCircle, Activity,
@@ -22,7 +24,7 @@ const SuperAdminDashboardPage = () => {
   const fetchData = () => {
     setLoading(true);
     setError(null);
-    fetch('http://localhost:5000/api/superadmin/dashboard', {
+    fetch(`${API_BASE}/api/superadmin/dashboard`, {
       headers: { 'x-user-role': 'super_admin' }
     })
       .then(r => {

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const initialFormState = {
   // Step 1: Identity
   name: '',
@@ -56,7 +58,7 @@ const BusinessRegistration = () => {
         slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
       };
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

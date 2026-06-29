@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Plus, Download, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const Payments = () => {
   const { businessType, businessId, isSuperAdmin } = useAuth();
 
@@ -42,7 +44,7 @@ const Payments = () => {
           console.log("Fetching invoices...");
           console.log("token exists:", !!token);
 
-          const response = await fetch('http://localhost:5000/api/invoices', {
+          const response = await fetch(`${API_BASE}/api/invoices`, {
             method: "GET",
             headers: {
               'Authorization': `Bearer ${token}`,

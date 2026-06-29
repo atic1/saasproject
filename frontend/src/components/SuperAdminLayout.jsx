@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   LayoutDashboard, Building2, Clock, Bell, Settings, LogOut,
   ChevronRight, Shield, Menu, X, AlertCircle
@@ -23,7 +25,7 @@ const SuperAdminLayout = () => {
   useEffect(() => {
     if (!isSuperAdmin) return;
     const token = localStorage.getItem('saas_token');
-    fetch('http://localhost:5000/api/superadmin/notifications', {
+    fetch(`${API_BASE}/api/superadmin/notifications`, {
       headers: {
         'x-user-role': 'super_admin',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})

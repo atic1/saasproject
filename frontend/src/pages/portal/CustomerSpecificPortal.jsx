@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { 
   Calendar, Clock, CreditCard, User, LogOut, CheckCircle, 
   AlertCircle, Phone, MapPin, Loader2, Sparkles, 
@@ -76,7 +78,7 @@ export default function CustomerSpecificPortal() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`http://localhost:5000/api/portal/customer/${customerId}`);
+      const res = await fetch(`${API_BASE}/api/portal/customer/${customerId}`);
       if (!res.ok) {
         if (res.status === 404) throw new Error('Customer profile link is invalid or expired.');
         throw new Error('Failed to connect to portal service.');
@@ -110,7 +112,7 @@ export default function CustomerSpecificPortal() {
         if (!authForm.name || !authForm.phone || !authForm.password) {
           throw new Error('Name, Phone and Password are required');
         }
-        const res = await fetch('http://localhost:5000/api/auth/customer/register', {
+        const res = await fetch(`${API_BASE}/api/auth/customer/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -151,7 +153,7 @@ export default function CustomerSpecificPortal() {
 
     try {
       const token = localStorage.getItem('saas_token');
-      const res = await fetch('http://localhost:5000/api/payments/initiate', {
+      const res = await fetch(`${API_BASE}/api/payments/initiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

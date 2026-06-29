@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Bell, Clock, MessageSquare, AlertCircle, CheckCircle,
   Building2, Mail, Phone, RefreshCw, XCircle, CalendarDays,
@@ -19,7 +21,7 @@ const SuperAdminNotificationsPage = () => {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    fetch('http://localhost:5000/api/superadmin/notifications', {
+    fetch(`${API_BASE}/api/superadmin/notifications`, {
       headers: { 'x-user-role': 'super_admin' }
     })
       .then(r => r.json())
@@ -32,7 +34,7 @@ const SuperAdminNotificationsPage = () => {
   const handleResolveTicket = async (ticketId) => {
     setResolvingId(ticketId);
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/support-tickets/${ticketId}/resolve`, {
+      const res = await fetch(`${API_BASE}/api/superadmin/support-tickets/${ticketId}/resolve`, {
         method: 'PUT',
         headers: { 'x-user-role': 'super_admin' }
       });

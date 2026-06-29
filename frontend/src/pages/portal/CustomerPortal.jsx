@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Calendar, Clock, CreditCard, User, LogOut, CheckCircle,
   AlertCircle, Phone, MapPin, Plus, Loader2, Star, Sparkles,
@@ -235,7 +237,7 @@ export default function CustomerPortal() {
     async function fetchBusiness() {
       try {
         setLoadingBusiness(true);
-        const res = await fetch(`http://localhost:5000/api/portal/business/${slug}`);
+        const res = await fetch(`${API_BASE}/api/portal/business/${slug}`);
         if (!res.ok) throw new Error("Business not found");
         const data = await res.json();
         setBusiness(data);
@@ -276,7 +278,7 @@ export default function CustomerPortal() {
     try {
       setLoadingData(true);
       const token = localStorage.getItem("saas_token");
-      const res = await fetch("http://localhost:5000/api/portal/bookings", {
+      const res = await fetch(`${API_BASE}/api/portal/bookings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -296,8 +298,8 @@ export default function CustomerPortal() {
   const fetchServicesAndStaff = async () => {
     try {
       const [resServices, resStaff] = await Promise.all([
-        fetch(`http://localhost:5000/api/portal/business/${slug}/services`),
-        fetch(`http://localhost:5000/api/portal/business/${slug}/staff`)
+        fetch(`${API_BASE}/api/portal/business/${slug}/services`),
+        fetch(`${API_BASE}/api/portal/business/${slug}/staff`)
       ]);
       if (resServices.ok) setServices(await resServices.json());
       if (resStaff.ok) setStaffList(await resStaff.json());
@@ -310,7 +312,7 @@ export default function CustomerPortal() {
     try {
       setLoadingSlots(true);
       const { serviceId, staffId, date } = bookingForm;
-      let url = `http://localhost:5000/api/portal/business/${slug}/availability?date=${date}&serviceId=${serviceId}`;
+      let url = `${API_BASE}/api/portal/business/${slug}/availability?date=${date}&serviceId=${serviceId}`;
       if (staffId) url += `&staffId=${staffId}`;
       const res = await fetch(url);
       if (res.ok) setSlots(await res.json());
@@ -334,7 +336,7 @@ export default function CustomerPortal() {
     setBookingSubmitLoading(true);
     try {
       const token = localStorage.getItem("saas_token");
-      const res = await fetch("http://localhost:5000/api/portal/bookings", {
+      const res = await fetch(`${API_BASE}/api/portal/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -371,7 +373,7 @@ export default function CustomerPortal() {
   const initiateGatewayPayment = async (invoiceId, method) => {
     try {
       const token = localStorage.getItem("saas_token");
-      const res = await fetch("http://localhost:5000/api/payments/initiate", {
+      const res = await fetch(`${API_BASE}/api/payments/initiate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ invoiceId, method })

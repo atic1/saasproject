@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { 
   Users, DollarSign, CalendarDays, ClipboardList, 
   LayoutDashboard, Settings, Globe, Bell, Menu, X, CheckCircle2, Clock, Package,
@@ -14,7 +16,7 @@ const BusinessDashboard = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/api/dashboard/business/${businessId}`)
+    fetch(`${API_BASE}/api/dashboard/business/${businessId}`)
       .then(res => res.json())
       .then(result => {
         setData(result);

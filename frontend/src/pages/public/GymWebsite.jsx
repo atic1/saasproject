@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Phone, Mail, MapPin, Clock,
   Star, ChevronRight, Dumbbell, Zap, Heart, Target,
@@ -107,7 +109,7 @@ const GymWebsite = () => {
     const fetchGym = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:5000/api/public/gym/${slug}`);
+        const res = await fetch(`${API_BASE}/api/public/gym/${slug}`);
         if (res.status === 404) { setNotFound(true); return; }
         if (!res.ok) throw new Error('Failed to load');
         const json = await res.json();
@@ -136,7 +138,7 @@ const GymWebsite = () => {
     e.preventDefault();
     setReviewSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/public/gym/${slug}/reviews`, {
+      const res = await fetch(`${API_BASE}/api/public/gym/${slug}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewForm)
