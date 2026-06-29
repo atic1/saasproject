@@ -1,3 +1,7 @@
+// Fix MongoDB Atlas SRV DNS resolution on VPS (system DNS often can't resolve .mongodb.net)
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
