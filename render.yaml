@@ -20,21 +20,21 @@ services:
         sync: false
 
   # 2. REACT FRONTEND STATIC SITE
-  - type: static
+  - type: web
     name: saasproject-frontend
-    env: static
+    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishDir: dist
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE
         fromService:
           name: saasproject-backend
           type: web
-          property: host # Render internal host or public URL
+          property: host
     routes:
-      # React Router SPA routing fallback
+      # React Router SPA routing fallback — prevents 404 on page refresh
       - type: rewrite
         source: /*
         destination: /index.html
