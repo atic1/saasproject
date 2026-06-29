@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Users, DollarSign, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const SuperadminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ const SuperadminDashboard = () => {
   const fetchData = () => {
     setLoading(true);
     setError(null);
-    fetch('http://localhost:5000/api/dashboard/superadmin')
+    fetch(`${API_BASE}/api/dashboard/superadmin`)
       .then(res => {
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         return res.json();

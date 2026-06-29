@@ -3,6 +3,8 @@ import { Plus, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../context/BookingContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const Bookings = () => {
   const { businessType, isSuperAdmin, activeBusiness } = useAuth();
   const { bookings, fetchBookings, changeStatus, removeBooking, loading, error } = useBookings();
@@ -36,17 +38,17 @@ const Bookings = () => {
         'X-Business-Id': activeBusiness.businessId
       };
 
-      fetch('http://localhost:5000/api/customers', { headers })
+      fetch(`${API_BASE}/api/customers`, { headers })
         .then(res => res.json())
         .then(data => setFormCustomers(Array.isArray(data) ? data : []))
         .catch(err => console.error(err));
 
-      fetch(`http://localhost:5000/api/services?businessId=${activeBusiness.businessId}`, { headers })
+      fetch(`${API_BASE}/api/services?businessId=${activeBusiness.businessId}`, { headers })
         .then(res => res.json())
         .then(data => setFormServices(Array.isArray(data) ? data : []))
         .catch(err => console.error(err));
 
-      fetch('http://localhost:5000/api/businesses/current/staff', { headers })
+      fetch(`${API_BASE}/api/businesses/current/staff`, { headers })
         .then(res => res.json())
         .then(data => setFormStaff(Array.isArray(data) ? data : []))
         .catch(err => console.error(err));

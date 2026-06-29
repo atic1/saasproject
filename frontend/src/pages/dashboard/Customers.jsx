@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const Customers = () => {
   const { businessType, isSuperAdmin, activeBusiness } = useAuth();
   const [search, setSearch] = useState('');
@@ -36,7 +38,7 @@ const Customers = () => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/customers', {
+      const res = await fetch(`${API_BASE}/api/customers`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-Business-Id': bId
@@ -60,7 +62,7 @@ const Customers = () => {
     if (!token || !bId) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/customers', {
+      const res = await fetch(`${API_BASE}/api/customers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

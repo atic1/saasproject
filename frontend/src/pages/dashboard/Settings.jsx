@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const SettingsPage = () => {
   const { user, isSuperAdmin, businessType, updateBusinessDetails, activeBusiness } = useAuth();
   
@@ -42,7 +44,7 @@ const SettingsPage = () => {
       const bId = activeBusiness?.businessId || user?.businessId;
       if (!token || token.startsWith('mock-') || !bId) return;
       try {
-        const response = await fetch('http://localhost:5000/api/businesses/current', {
+        const response = await fetch(`${API_BASE}/api/businesses/current`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-Business-Id': bId
@@ -91,7 +93,7 @@ const SettingsPage = () => {
     const bId = activeBusiness?.businessId || user?.businessId;
     if (token && !token.startsWith('mock-') && bId) {
       try {
-        const response = await fetch('http://localhost:5000/api/businesses/current', {
+        const response = await fetch(`${API_BASE}/api/businesses/current`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -163,7 +165,7 @@ const SettingsPage = () => {
     const bId = activeBusiness?.businessId || user?.businessId;
     if (token && !token.startsWith('mock-') && bId) {
       try {
-        const response = await fetch('http://localhost:5000/api/businesses/current', {
+        const response = await fetch(`${API_BASE}/api/businesses/current`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

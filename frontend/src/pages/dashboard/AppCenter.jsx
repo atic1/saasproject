@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Users, QrCode, Calendar, Dumbbell, Shield,
   CreditCard, Tag, Bell, TrendingUp, Activity,
@@ -406,7 +408,7 @@ export default function AppCenter() {
       if (!businessId) throw new Error('Business not found');
 
       const body = { features: featureStates };
-      const res = await fetch(`http://localhost:5000/api/businesses/${businessId}/features`, {
+      const res = await fetch(`${API_BASE}/api/businesses/${businessId}/features`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),

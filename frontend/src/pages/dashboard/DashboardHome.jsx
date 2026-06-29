@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
 const DashboardHome = () => {
   const [searchParams] = useSearchParams();
   const { user, isSuperAdmin, businessType, businessId } = useAuth();
@@ -40,8 +42,8 @@ const DashboardHome = () => {
         }
 
         const endpoint = isSuperAdmin 
-          ? 'http://localhost:5000/api/dashboard/superadmin' 
-          : 'http://localhost:5000/api/dashboard/business';
+          ? `${API_BASE}/api/dashboard/superadmin` 
+          : `${API_BASE}/api/dashboard/business`;
 
         const headers = {
           'Authorization': `Bearer ${token}`
@@ -92,7 +94,7 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
     try {
       setTabLoading(true);
-      const res = await fetch(`http://localhost:5000/api/plans/${businessId}`, {
+      const res = await fetch(`${API_BASE}/api/plans/${businessId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
       if (res.ok) setPlans(await res.json());
@@ -108,7 +110,7 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
     try {
       setTabLoading(true);
-      const res = await fetch(`http://localhost:5000/api/trainers/${businessId}`, {
+      const res = await fetch(`${API_BASE}/api/trainers/${businessId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
       if (res.ok) setTrainers(await res.json());
@@ -124,7 +126,7 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
     try {
       setTabLoading(true);
-      const res = await fetch(`http://localhost:5000/api/offers/${businessId}`, {
+      const res = await fetch(`${API_BASE}/api/offers/${businessId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
       if (res.ok) setOffers(await res.json());
@@ -153,8 +155,8 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
 
     const url = editingPlan 
-      ? `http://localhost:5000/api/plans/${businessId}/${editingPlan._id}`
-      : `http://localhost:5000/api/plans/${businessId}`;
+      ? `${API_BASE}/api/plans/${businessId}/${editingPlan._id}`
+      : `${API_BASE}/api/plans/${businessId}`;
     const method = editingPlan ? 'PUT' : 'POST';
 
     const featuresList = planForm.features.split(',')
@@ -193,7 +195,7 @@ const DashboardHome = () => {
     if (!confirm('Are you sure you want to delete this plan?')) return;
     const token = localStorage.getItem('saas_token');
     try {
-      const res = await fetch(`http://localhost:5000/api/plans/${businessId}/${planId}`, {
+      const res = await fetch(`${API_BASE}/api/plans/${businessId}/${planId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
@@ -209,8 +211,8 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
 
     const url = editingOffer
-      ? `http://localhost:5000/api/offers/${businessId}/${editingOffer._id}`
-      : `http://localhost:5000/api/offers/${businessId}`;
+      ? `${API_BASE}/api/offers/${businessId}/${editingOffer._id}`
+      : `${API_BASE}/api/offers/${businessId}`;
     const method = editingOffer ? 'PUT' : 'POST';
 
     const payload = {
@@ -246,7 +248,7 @@ const DashboardHome = () => {
     if (!confirm('Are you sure you want to delete this offer?')) return;
     const token = localStorage.getItem('saas_token');
     try {
-      const res = await fetch(`http://localhost:5000/api/offers/${businessId}/${offerId}`, {
+      const res = await fetch(`${API_BASE}/api/offers/${businessId}/${offerId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
@@ -262,8 +264,8 @@ const DashboardHome = () => {
     if (!token || !businessId) return;
 
     const url = editingTrainer
-      ? `http://localhost:5000/api/trainers/${businessId}/${editingTrainer._id}`
-      : `http://localhost:5000/api/trainers/${businessId}`;
+      ? `${API_BASE}/api/trainers/${businessId}/${editingTrainer._id}`
+      : `${API_BASE}/api/trainers/${businessId}`;
     const method = editingTrainer ? 'PUT' : 'POST';
 
     const payload = {
@@ -295,7 +297,7 @@ const DashboardHome = () => {
     if (!confirm('Are you sure you want to delete this trainer?')) return;
     const token = localStorage.getItem('saas_token');
     try {
-      const res = await fetch(`http://localhost:5000/api/trainers/${businessId}/${trainerId}`, {
+      const res = await fetch(`${API_BASE}/api/trainers/${businessId}/${trainerId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       });
@@ -869,7 +871,7 @@ const DashboardHome = () => {
                         <button 
                           onClick={async () => {
                             const token = localStorage.getItem('saas_token');
-                            await fetch(`http://localhost:5000/api/plans/${businessId}/${plan._id}`, {
+                            await fetch(`${API_BASE}/api/plans/${businessId}/${plan._id}`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
                               body: JSON.stringify({ isActive: !plan.isActive })
@@ -1047,7 +1049,7 @@ const DashboardHome = () => {
                         <button 
                           onClick={async () => {
                             const token = localStorage.getItem('saas_token');
-                            await fetch(`http://localhost:5000/api/offers/${businessId}/${offer._id}`, {
+                            await fetch(`${API_BASE}/api/offers/${businessId}/${offer._id}`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
                               body: JSON.stringify({ isActive: !offer.isActive, status: !offer.isActive ? 'active' : 'paused' })

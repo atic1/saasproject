@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import {
   Building2, Search, CheckCircle, XCircle, Trash2, PauseCircle,
   PlayCircle, RefreshCw, AlertTriangle, Filter, MapPin, Phone,
@@ -69,7 +71,7 @@ const SuperAdminBusinessesPage = () => {
     if (filter !== 'all') params.set('status', filter);
     if (search.trim()) params.set('search', search.trim());
 
-    fetch(`http://localhost:5000/api/superadmin/businesses?${params}`, {
+    fetch(`${API_BASE}/api/superadmin/businesses?${params}`, {
       headers: { 'x-user-role': 'super_admin' }
     })
       .then(r => r.json())
@@ -86,7 +88,7 @@ const SuperAdminBusinessesPage = () => {
     setConfirmModal(null);
     setActionLoading(id);
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/businesses/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/superadmin/businesses/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-user-role': 'super_admin' },
         body: JSON.stringify({ status })
@@ -114,7 +116,7 @@ const SuperAdminBusinessesPage = () => {
     setConfirmModal(null);
     setActionLoading(id);
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/businesses/${id}`, {
+      const res = await fetch(`${API_BASE}/api/superadmin/businesses/${id}`, {
         method: 'DELETE',
         headers: { 'x-user-role': 'super_admin' }
       });
