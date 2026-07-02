@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 import {
   Sparkles, Phone, Mail, MapPin, Globe, Loader2, ArrowRight, Check,
   AlertCircle, CheckCircle, User, LogOut, Shield, Calendar, Edit2, Info,

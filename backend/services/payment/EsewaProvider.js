@@ -36,7 +36,7 @@ class EsewaProvider extends PaymentProvider {
     };
   }
 
-  async initiatePayment({ payment, invoice, business }) {
+  async initiatePayment({ payment, invoice, business, backendUrl }) {
     const { productCode, secretKey, isProd } = this.getCredentials(business);
 
     const formUrl = isProd
@@ -53,11 +53,11 @@ class EsewaProvider extends PaymentProvider {
 
     const successUrl =
       process.env.ESEWA_SUCCESS_URL ||
-      `http://localhost:5000/api/payments/callback/esewa/success`;
+      `${backendUrl}/api/payments/callback/esewa/success`;
 
     const failureUrl =
       process.env.ESEWA_FAILURE_URL ||
-      `http://localhost:5000/api/payments/callback/esewa/failure`;
+      `${backendUrl}/api/payments/callback/esewa/failure`;
 
     // =========================
     // SIGNATURE STRING (STRICT)

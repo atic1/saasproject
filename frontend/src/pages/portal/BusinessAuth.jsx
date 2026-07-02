@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 import { 
   User, Mail, Lock, Phone, ArrowRight, Loader2, Sparkles, AlertCircle, ChevronLeft, CheckCheck
 } from 'lucide-react';

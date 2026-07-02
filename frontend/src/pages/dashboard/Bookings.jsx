@@ -3,7 +3,7 @@ import { Plus, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../context/BookingContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const Bookings = () => {
   const { businessType, isSuperAdmin, activeBusiness } = useAuth();

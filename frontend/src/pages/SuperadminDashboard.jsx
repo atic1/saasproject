@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Users, DollarSign, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const SuperadminDashboard = () => {
   const [data, setData] = useState(null);

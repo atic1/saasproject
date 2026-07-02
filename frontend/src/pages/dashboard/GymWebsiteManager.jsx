@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}/api`;
+const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api`;
 
 // =============================================
 //  Helpers
@@ -757,7 +757,7 @@ const GymWebsiteManager = () => {
     const token = localStorage.getItem('saas_token');
     const businessId = activeBusiness?.businessId;
     if (businessId) {
-      fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}/api/dashboard/business`, {
+      fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/business`, {
         headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
       }).then(r => r.json()).then(d => {
         setSlug(d?.business?.slug || '');

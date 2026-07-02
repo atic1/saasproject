@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const DashboardHome = () => {
   const [searchParams] = useSearchParams();
@@ -1309,7 +1309,7 @@ const DashboardHome = () => {
                 rel="noreferrer"
                 style={{ color: currentAccent, textDecoration: 'underline', fontWeight: '800' }}
               >
-                http://localhost:5173/{data.business.slug}/portal
+                {window.location.origin}/{data.business.slug}/portal
               </a>
             </div>
           )}
