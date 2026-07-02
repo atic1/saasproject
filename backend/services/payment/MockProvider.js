@@ -1,11 +1,11 @@
 const PaymentProvider = require('./PaymentProvider');
 
 class MockProvider extends PaymentProvider {
-  async initiatePayment({ payment, invoice, business }) {
+  async initiatePayment({ payment, invoice, business, backendUrl }) {
     // Standard mock redirect parameters
     return {
       type: 'redirect',
-      url: `http://localhost:5000/api/payments/callback/mock?transaction_uuid=${payment.transaction_uuid}&status=completed`
+      url: `${backendUrl}/api/payments/callback/mock?transaction_uuid=${payment.transaction_uuid}&status=completed`
     };
   }
 

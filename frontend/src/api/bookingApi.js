@@ -1,4 +1,4 @@
-const API_URL = `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}/api/bookings`;
+const API_URL = `${import.meta.env.VITE_API_URL || ''}/api/bookings`;
 
 export const getBookings = async (token, businessId) => {
   const res = await fetch(API_URL, {

@@ -11,10 +11,29 @@ require("dotenv").config();
 
 const app = express();
 
-console.log("Loaded MONGO_URL:", !!process.env.MONGO_URL);
+const dbUri = process.env.MONGO_URI || process.env.MONGO_URL || process.env.DATABASE_URL;
+console.log("Database connection string present:", !!dbUri);
 
 app.use(helmet());
-app.use(cors());
+
+// Dynamic CORS configuration
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors({
+  origin: function (origin, callback) {
+    // If no CORS_ORIGIN is specified or set to wildcard, allow all
+    if (!corsOrigin || corsOrigin === '*') {
+      callback(null, true);
+    } else {
+      const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true
+}));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -98,7 +117,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 mongoose
-  .connect(process.env.MONGO_URL)
+  .connect(dbUri)
   .then(() => {
     console.log("MongoDB Connected ✅");
     app.listen(PORT, () => {
