@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../../config/api.js';
 import { 
   Calendar, Clock, CreditCard, User, LogOut, CheckCircle, 
   AlertCircle, Phone, MapPin, Loader2, Sparkles, 

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../context/BookingContext';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../../config/api.js';
 
 const Bookings = () => {
   const { businessType, isSuperAdmin, activeBusiness } = useAuth();

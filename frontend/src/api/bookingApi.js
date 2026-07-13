@@ -1,4 +1,14 @@
-const API_URL = `${import.meta.env.VITE_API_URL || ''}/api/bookings`;
+import API_BASE from '../config/api.js';
+
+const API_URL = `${API_BASE}/api/bookings`;
+
+const handleResponse = async (res) => {
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Request failed with status ${res.status}`);
+  }
+  return data;
+};
 
 export const getBookings = async (token, businessId) => {
   const res = await fetch(API_URL, {
@@ -7,7 +17,7 @@ export const getBookings = async (token, businessId) => {
       'X-Business-Id': businessId
     }
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const createBooking = async (token, businessId, data) => {
@@ -20,7 +30,7 @@ export const createBooking = async (token, businessId, data) => {
     },
     body: JSON.stringify(data)
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateBookingStatus = async (token, businessId, id, status) => {
@@ -33,7 +43,7 @@ export const updateBookingStatus = async (token, businessId, id, status) => {
     },
     body: JSON.stringify({ status })
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteBooking = async (token, businessId, id) => {
@@ -44,7 +54,7 @@ export const deleteBooking = async (token, businessId, id) => {
       'X-Business-Id': businessId
     }
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const rescheduleBooking = async (token, businessId, id, newDate, newStartTime, newEndTime) => {
@@ -61,7 +71,7 @@ export const rescheduleBooking = async (token, businessId, id, newDate, newStart
       newEndTime
     })
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getBookingsByDay = async (token, businessId, date, staffId = null) => {
@@ -74,7 +84,7 @@ export const getBookingsByDay = async (token, businessId, date, staffId = null) 
       'X-Business-Id': businessId
     }
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getBookingsByWeek = async (token, businessId, startDate, staffId = null) => {
@@ -87,5 +97,5 @@ export const getBookingsByWeek = async (token, businessId, startDate, staffId = 
       'X-Business-Id': businessId
     }
   });
-  return res.json();
+  return handleResponse(res);
 };

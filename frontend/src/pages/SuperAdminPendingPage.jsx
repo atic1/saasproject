@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 import {
   Clock, CheckCircle, XCircle, Trash2, Building2, Mail,
-  Phone, MapPin, CalendarDays, RefreshCw, AlertTriangle, User
+  Phone, MapPin, CalendarDays, RefreshCw, AlertTriangle, User,
+  FileText
 } from 'lucide-react';
 
 const Toast = ({ message, type, onClose }) => (
@@ -188,6 +188,41 @@ const SuperAdminPendingPage = () => {
                       <CalendarDays size={13} className="text-gray-500 flex-shrink-0" />
                       <span>Registered {new Date(biz.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
+                    {biz.panVat && biz.panVat !== 'N/A' && (
+                      <div className="flex items-center gap-2">
+                        <FileText size={13} className="text-gray-500 flex-shrink-0" />
+                        <span>PAN/VAT: <strong className="text-gray-300">{biz.panVat}</strong></span>
+                      </div>
+                    )}
+                    {biz.registrationDoc && biz.registrationDoc.data && (
+                      <div className="mt-3 pt-3 border-t border-gray-800">
+                        <span className="block text-xs font-bold text-gray-500 mb-1">Registration Document ({biz.registrationDoc.name})</span>
+                        {biz.registrationDoc.mimeType?.startsWith('image/') ? (
+                          <div className="mt-1">
+                            <img 
+                              src={biz.registrationDoc.data} 
+                              alt="Doc Preview" 
+                              className="max-w-xs max-h-40 rounded-lg border border-gray-700 object-contain bg-gray-950" 
+                            />
+                            <a 
+                              href={biz.registrationDoc.data} 
+                              download={biz.registrationDoc.name} 
+                              className="inline-block mt-1 text-xs text-purple-400 hover:text-purple-300 underline font-semibold"
+                            >
+                              Download Image
+                            </a>
+                          </div>
+                        ) : (
+                          <a 
+                            href={biz.registrationDoc.data} 
+                            download={biz.registrationDoc.name} 
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition-all mt-1 border border-gray-750"
+                          >
+                            📥 Download File ({biz.registrationDoc.name})
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
