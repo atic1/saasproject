@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 
 const AuthContext = createContext(null);
 
@@ -123,18 +122,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleSetActiveBusiness = async (business) => {
-    setActiveBusiness(business);
-    if (business) {
-      localStorage.setItem('saas_active_business', JSON.stringify(business));
+    // Preserve businessStatus if present in membership object
+    const businessWithStatus = business ? {
+      ...business,
+      businessStatus: business.businessStatus || business.status
+    } : business;
+    setActiveBusiness(businessWithStatus);
+    if (businessWithStatus) {
+      localStorage.setItem('saas_active_business', JSON.stringify(businessWithStatus));
       
       // Update user fallback fields for backward compatibility
       setUser(prev => {
         if (!prev) return prev;
         const updated = {
           ...prev,
-          businessId: business.businessId,
-          businessName: business.businessName,
-          businessType: business.businessType
+          businessId: businessWithStatus.businessId,
+          businessName: businessWithStatus.businessName,
+          businessType: businessWithStatus.businessType,
+          businessStatus: businessWithStatus.businessStatus
         };
         localStorage.setItem('saas_user', JSON.stringify(updated));
         return updated;
@@ -150,7 +155,7 @@ export const AuthProvider = ({ children }) => {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ businessId: business.businessId })
+            body: JSON.stringify({ businessId: businessWithStatus.businessId })
           });
           const data = await response.json();
 
@@ -243,10 +248,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, businessName, businessType) => {
+  const register = async (name, phone, email, password, businessName, businessType, city, address, panVat, registrationDoc, subscriptionPlan) => {
     try {
       const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const phone = '98' + Math.floor(10000000 + Math.random() * 90000000); // Generate a mock phone matching regex
       
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
@@ -258,7 +262,12 @@ export const AuthProvider = ({ children }) => {
           password,
           businessName,
           businessType,
-          slug
+          slug,
+          city,
+          address,
+          panVat,
+          registrationDoc,
+          subscriptionPlan
         })
       });
       

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 import {
   LayoutDashboard, Building2, Clock, Bell, Settings, LogOut,
   ChevronRight, Shield, Menu, X, AlertCircle

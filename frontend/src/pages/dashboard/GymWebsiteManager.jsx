@@ -5,8 +5,9 @@ import {
   ExternalLink, Loader, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import API_BASE_ROOT from '../../config/api.js';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api`;
+const API_BASE = `${API_BASE_ROOT}/api`;
 
 // =============================================
 //  Helpers

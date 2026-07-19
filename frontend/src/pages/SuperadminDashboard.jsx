@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Users, DollarSign, Activity, AlertCircle, RefreshCw } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 
 const SuperadminDashboard = () => {
   const [data, setData] = useState(null);

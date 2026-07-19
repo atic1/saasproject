@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 import {
   Building2, Search, CheckCircle, XCircle, Trash2, PauseCircle,
   PlayCircle, RefreshCw, AlertTriangle, Filter, MapPin, Phone,

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 import { Link } from 'react-router-dom';
 import {
   Building2, CheckCircle, Clock, XCircle, Activity,

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
   User, Mail, Lock, Sparkles, Loader2, Dumbbell, 
-  Scissors, Stethoscope, Briefcase, ChevronRight, ChevronLeft 
+  Scissors, Stethoscope, Briefcase, ChevronRight, ChevronLeft,
+  Phone, MapPin, FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,12 +16,37 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const [ownerData, setOwnerData] = useState({ name: '', email: '', password: '' });
+  const [ownerData, setOwnerData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [businessData, setBusinessData] = useState({
     businessName: '',
     businessType: 'gym',
+    city: 'kathmandu',
+    address: '',
+    panVat: '',
     subscriptionPlan: 'starter'
   });
+  const [docFile, setDocFile] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDocFile({
+          name: file.name,
+          mimeType: file.type,
+          data: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Pull plan from URL query string if provided
   useEffect(() => {
@@ -33,8 +59,20 @@ const Register = () => {
   const handleNextStep = (e) => {
     e.preventDefault();
     if (step === 1) {
-      if (!ownerData.name || !ownerData.email || !ownerData.password) {
-        setError('Please fill in your owner details.');
+      if (!ownerData.name || !ownerData.email || !ownerData.phone || !ownerData.password || !ownerData.confirmPassword) {
+        setError('Please fill in all owner credentials.');
+        return;
+      }
+      if (ownerData.password.length < 8) {
+        setError('Password must be at least 8 characters long.');
+        return;
+      }
+      if (ownerData.password !== ownerData.confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      if (!/^98\d{8}$/.test(ownerData.phone)) {
+        setError('Phone number must be a valid 10-digit Nepali number starting with 98.');
         return;
       }
       setError('');
@@ -55,10 +93,15 @@ const Register = () => {
     try {
       await register(
         ownerData.name,
+        ownerData.phone,
         ownerData.email,
         ownerData.password,
         businessData.businessName,
         businessData.businessType,
+        businessData.city,
+        businessData.address,
+        businessData.panVat,
+        docFile,
         businessData.subscriptionPlan
       );
       setLoading(false);
@@ -107,6 +150,23 @@ const Register = () => {
           </div>
 
           <div className="form-group">
+            <label htmlFor="phone">Owner Phone Number</label>
+            <div className="input-wrapper">
+              <Phone size={16} className="input-icon" />
+              <input 
+                type="tel" 
+                id="phone" 
+                required
+                placeholder="e.g. 9841234567" 
+                pattern="^98\d{8}$"
+                title="Must be a valid 10-digit Nepali mobile number starting with 98"
+                value={ownerData.phone}
+                onChange={(e) => setOwnerData({ ...ownerData, phone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
             <label htmlFor="email">Work Email</label>
             <div className="input-wrapper">
               <Mail size={16} className="input-icon" />
@@ -133,6 +193,21 @@ const Register = () => {
                 placeholder="Minimum 8 characters" 
                 value={ownerData.password}
                 onChange={(e) => setOwnerData({ ...ownerData, password: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <div className="input-wrapper">
+              <Lock size={16} className="input-icon" />
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                required
+                placeholder="Match your administrator password" 
+                value={ownerData.confirmPassword}
+                onChange={(e) => setOwnerData({ ...ownerData, confirmPassword: e.target.value })}
               />
             </div>
           </div>
@@ -198,6 +273,83 @@ const Register = () => {
                 <Stethoscope size={20} />
                 <span>Clinic Hub</span>
               </label>
+            </div>
+          </div>
+
+          {/* City & Address */}
+          <div className="form-row-two">
+            <div className="form-group flex-1 text-left">
+              <label htmlFor="city">City</label>
+              <select 
+                id="city" 
+                value={businessData.city}
+                onChange={(e) => setBusinessData({ ...businessData, city: e.target.value })}
+                className="styled-select"
+              >
+                <option value="kathmandu">Kathmandu</option>
+                <option value="pokhara">Pokhara</option>
+                <option value="lalitpur">Lalitpur</option>
+                <option value="bhaktapur">Bhaktapur</option>
+                <option value="biratnagar">Biratnagar</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div className="form-group flex-1 text-left">
+              <label htmlFor="address">Specific Address</label>
+              <div className="input-wrapper">
+                <MapPin size={16} className="input-icon" />
+                <input 
+                  type="text" 
+                  id="address" 
+                  required
+                  placeholder="e.g. Thamel, Ward 26" 
+                  value={businessData.address}
+                  onChange={(e) => setBusinessData({ ...businessData, address: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* PAN/VAT and Doc Upload */}
+          <div className="form-row-two">
+            <div className="form-group flex-1 text-left">
+              <label htmlFor="panVat">PAN/VAT Number (Optional)</label>
+              <div className="input-wrapper">
+                <FileText size={16} className="input-icon" />
+                <input 
+                  type="text" 
+                  id="panVat" 
+                  placeholder="e.g. 123456789" 
+                  value={businessData.panVat}
+                  onChange={(e) => setBusinessData({ ...businessData, panVat: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="form-group flex-1 text-left">
+              <label htmlFor="doc-upload">Registration Doc (Optional)</label>
+              <div className="file-upload-zone">
+                <input 
+                  type="file" 
+                  id="doc-upload" 
+                  accept="image/*,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden-file-input"
+                />
+                <label htmlFor="doc-upload" className="file-upload-label">
+                  {docFile ? (
+                    <div className="selected-file-info">
+                      <span className="file-name-span">{docFile.name.substring(0, 15)}{docFile.name.length > 15 ? '...' : ''}</span>
+                      <span className="file-size-status">Ready</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="upload-icon">📁 Choose File</span>
+                    </>
+                  )}
+                </label>
+              </div>
             </div>
           </div>
 
@@ -404,6 +556,66 @@ const Register = () => {
         }
         .btn-half {
           flex: 1;
+        }
+        
+        /* Two-column layout */
+        .form-row-two {
+          display: flex;
+          gap: 16px;
+        }
+        .flex-1 {
+          flex: 1;
+        }
+        
+        /* File Upload Zone */
+        .file-upload-zone {
+          border: 1px dashed hsla(var(--border));
+          border-radius: var(--radius-md);
+          padding: 8px 12px;
+          text-align: center;
+          background-color: hsla(var(--bg-base), 0.4);
+          transition: all var(--transition-fast);
+          cursor: pointer;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .file-upload-zone:hover {
+          border-color: hsla(var(--primary));
+          background-color: hsla(var(--primary), 0.05);
+        }
+        .hidden-file-input {
+          display: none;
+        }
+        .file-upload-label {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          cursor: pointer;
+          color: hsla(var(--text-muted));
+          font-size: 0.85rem;
+          width: 100%;
+        }
+        .selected-file-info {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          gap: 8px;
+        }
+        .file-name-span {
+          color: hsla(var(--text-main));
+          font-weight: 700;
+          font-size: 0.8rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .file-size-status {
+          color: #10b981;
+          font-size: 0.75rem;
+          font-weight: 800;
         }
       `}</style>
     </div>

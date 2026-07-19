@@ -7,8 +7,7 @@ import {
   Edit, Trash2, Globe, Percent, Clock, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../../config/api.js';
 
 const DashboardHome = () => {
   const [searchParams] = useSearchParams();

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../config/api.js';
 import { 
   LayoutDashboard, Settings, Globe, Bell, Menu, X, Plus, Package, Tag, Users, CalendarDays,
   Shield, AlertTriangle, XCircle

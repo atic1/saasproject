@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import API_BASE from '../../config/api.js';
 import { 
   User, Mail, Lock, Phone, ArrowRight, Loader2, Sparkles, AlertCircle, ChevronLeft, CheckCheck
 } from 'lucide-react';
