@@ -105,6 +105,5 @@ const paymentSchema = new mongoose.Schema({
 
 paymentSchema.index({ businessId: 1, status: 1 });
 paymentSchema.index({ businessId: 1, createdAt: -1 });
-paymentSchema.index({ transactionId: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);
