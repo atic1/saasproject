@@ -30,19 +30,31 @@ router.post('/register', async (req, res) => {
       password,
       businessName,
       businessType,
-      slug
+      slug,
+      city,
+      address,
+      panVat,
+      registrationDoc
     } = req.body;
 
     if (!name || !phone || !password || !businessName || !businessType) {
       return res.status(400).json({ message: "Name, phone, password, business name, and business type are required" });
     }
 
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+
+    if (!/^98\d{8}$/.test(phone)) {
+      return res.status(400).json({ message: "Phone number must be a valid 10-digit Nepali number starting with 98" });
+    }
+
     const existingUser = await User.findOne({
-      $or: [{ phone }, { email }]
+      $or: [{ phone }, { email: email || 'never_match_dummy@biznepal.com' }]
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "User already exists with this phone or email" });
     }
 
     const user = await User.create({
@@ -56,12 +68,18 @@ router.post('/register', async (req, res) => {
     const business = await Business.create({
       name: businessName,
       type: businessType,
-      slug: slug || businessName.toLowerCase().replace(/\s+/g, '-'),
+      slug: slug || businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       ownerId: user._id,
-      status: "active",
+      status: "pending",
       contact: {
         phone: phone || "9800000000",
-        city: "kathmandu"
+        email: email,
+        city: city || "kathmandu",
+        address: address || ""
+      },
+      details: {
+        panVat: panVat || "",
+        registrationDoc: registrationDoc || null
       },
       subscription: {
         plan: "free_trial",
@@ -77,6 +95,16 @@ router.post('/register', async (req, res) => {
       businessId: business._id,
       role: "owner"
     });
+
+    // Send congratulatory email
+    try {
+      const { sendCongratulatoryEmail } = require('../services/emailService');
+      if (email) {
+        await sendCongratulatoryEmail(email, businessName, name);
+      }
+    } catch (emailErr) {
+      console.error("Failed to send registration congratulatory email:", emailErr.message);
+    }
 
     // Auto-seed default services based on business type
     const defaultServices = {
@@ -171,6 +199,7 @@ router.post('/register', async (req, res) => {
         businessId: business._id.toString(),
         businessName: business.name,
         businessType: business.type,
+        businessStatus: business.status,
         role: "owner"
       }
     ];
@@ -322,6 +351,7 @@ router.post('/login', async (req, res) => {
         businessId: m.businessId._id.toString(),
         businessName: m.businessId.name,
         businessType: m.businessId.type,
+        businessStatus: m.businessId.status,
         role: m.role
       }));
 
