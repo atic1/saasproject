@@ -82,20 +82,22 @@ router.get('/businesses', async (req, res) => {
             ];
         }
 
-        const businesses = await Business.find(query).sort({ createdAt: -1 });
+        const businesses = await Business.find(query).populate('ownerId').sort({ createdAt: -1 });
 
         const mappedBusinesses = businesses.map(b => ({
             id: b._id,
             name: b.name,
             type: b.type,
             status: b.status,
-            ownerName: b.contact?.phone ? `Owner (${b.contact.phone})` : 'N/A', // Mocking owner name using contact info since user model is separate
+            ownerName: b.ownerId ? b.ownerId.name : (b.contact?.phone ? `Owner (${b.contact.phone})` : 'N/A'),
             email: b.contact?.email || 'N/A',
             phone: b.contact?.phone || 'N/A',
             city: b.contact?.city || 'N/A',
             address: b.contact?.address || 'N/A',
             createdAt: b.createdAt,
-            trialEnds: b.subscription?.trialEnds || null
+            trialEnds: b.subscription?.trialEnds || null,
+            panVat: b.details?.panVat || 'N/A',
+            registrationDoc: b.details?.registrationDoc || null
         }));
 
         res.json(mappedBusinesses);
@@ -122,6 +124,20 @@ router.put('/businesses/:id/status', async (req, res) => {
 
         business.status = status;
         await business.save();
+
+        if (status === 'active') {
+            try {
+                const { sendVerificationEmail } = require('../services/emailService');
+                const recipientEmail = business.contact?.email || business.email;
+                if (recipientEmail) {
+                    await sendVerificationEmail(recipientEmail, business.name);
+                } else {
+                    console.warn(`No email found for business ${business.name} to send verification approval email.`);
+                }
+            } catch (emailErr) {
+                console.error("Failed to send verification approval email:", emailErr.message);
+            }
+        }
 
         // Create a Mock platform notification for approval/rejection
         const title = status === 'active' ? "Business Approved 🎉" : status === 'rejected' ? "Registration Rejected ❌" : "Account Suspended ⚠️";

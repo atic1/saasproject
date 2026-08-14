@@ -70,7 +70,12 @@ const businessSchema = new mongoose.Schema({
     establishedYear: Number,
     staffCount: { type: Number, default: 0 },
     capacity: { type: Number, default: 50 },
-    squareFeet: Number
+    squareFeet: Number,
+    registrationDoc: {
+      name: String,
+      mimeType: String,
+      data: String
+    }
   },
 
   ownerId: {

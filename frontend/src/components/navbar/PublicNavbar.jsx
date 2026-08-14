@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sparkles, Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const PublicNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { isAuthenticated, user, toggleTheme, theme } = useAuth();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="glass sticky-nav">
+    <nav className={`glass sticky-nav ${isScrolled ? 'scrolled' : ''}`}>
       <div className="container nav-wrapper">
         <Link to="/" className="nav-logo flex items-center gap-2.5 group" onClick={() => setIsOpen(false)}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -94,11 +103,21 @@ const PublicNavbar = () => {
         .sticky-nav {
           position: sticky;
           top: 0;
+          left: 0;
+          right: 0;
+          width: 100%;
           z-index: 100;
           height: 72px;
           display: flex;
           align-items: center;
-          transition: background var(--transition-normal);
+          transition: background var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal), backdrop-filter var(--transition-normal);
+        }
+        .sticky-nav.scrolled {
+          background: hsla(var(--bg-surface-frosted));
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+          border-bottom: 1px solid hsla(var(--border-frosted));
         }
         .nav-wrapper {
           display: flex;

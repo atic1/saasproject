@@ -37,6 +37,7 @@ router.post('/select-business', protect, async (req, res) => {
         id: membership.businessId._id,
         name: membership.businessId.name,
         type: membership.businessId.type,
+        status: membership.businessId.status,
         role: membership.role
       }
     });
