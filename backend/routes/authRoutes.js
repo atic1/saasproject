@@ -275,18 +275,15 @@ router.post('/login', async (req, res) => {
     }
 
     // ----------------------------
-    // 🔐 DEMO ADMIN CHECK
+    // 🔐 DEMO ADMIN CHECK (GYM)
     // ----------------------------
-    // Demo Admin shortcut login (username based)
-    if ((loginIdentifier === 'admin' || username === 'admin') && password === 'admin123') {
-      const demoBusiness = await Business.findOne({ slug: 'fitzone-gym' });
-      const anyBusiness = !demoBusiness ? await Business.findOne({}) : null;
-      const biz = demoBusiness || anyBusiness;
+    if ((loginIdentifier === 'admin' || username === 'admin' || email === 'gym-owner@fitzone.com') && password === 'admin123') {
+      const demoBusiness = await Business.findOne({ slug: 'fitzone-gym' }) || await Business.findOne({ type: 'gym' }) || await Business.findOne({});
 
-      if (!biz) {
+      if (!demoBusiness) {
         return res.status(404).json({
           success: false,
-          message: "No businesses exist in the database. Please run seed.js first."
+          message: "No businesses exist in the database."
         });
       }
 
@@ -298,9 +295,9 @@ router.post('/login', async (req, res) => {
 
       const membershipsFormatted = [
         {
-          businessId: biz._id.toString(),
-          businessName: biz.name,
-          businessType: biz.type,
+          businessId: demoBusiness._id.toString(),
+          businessName: demoBusiness.name,
+          businessType: demoBusiness.type,
           role: 'owner'
         }
       ];
@@ -308,13 +305,103 @@ router.post('/login', async (req, res) => {
       return res.json({
         success: true,
         role: 'owner',
-        businessId: biz._id,
-        businessName: biz.name,
+        businessId: demoBusiness._id,
+        businessName: demoBusiness.name,
         token,
         user: {
           id: 'admin',
-          name: 'Demo Admin',
-          email: 'admin@saas.com',
+          name: 'Alex Rivera',
+          email: 'gym-owner@fitzone.com',
+          platformrole: 'user',
+          memberships: membershipsFormatted
+        },
+        memberships: membershipsFormatted
+      });
+    }
+
+    // ----------------------------
+    // 🔐 DEMO SALON ADMIN CHECK
+    // ----------------------------
+    if ((loginIdentifier === 'salonadmin' || username === 'salonadmin' || email === 'salon-owner@glow.com') && password === 'salon123') {
+      const demoBusiness = await Business.findOne({ slug: 'glow-beauty' }) || await Business.findOne({ type: 'salon' }) || await Business.findOne({});
+
+      if (!demoBusiness) {
+        return res.status(404).json({
+          success: false,
+          message: "No salon business found in database."
+        });
+      }
+
+      const token = jwt.sign(
+        { id: 'salonadmin', platformrole: 'user' },
+        process.env.JWT_SECRET || 'secret123',
+        { expiresIn: '30d' }
+      );
+
+      const membershipsFormatted = [
+        {
+          businessId: demoBusiness._id.toString(),
+          businessName: demoBusiness.name,
+          businessType: demoBusiness.type,
+          role: 'owner'
+        }
+      ];
+
+      return res.json({
+        success: true,
+        role: 'owner',
+        businessId: demoBusiness._id,
+        businessName: demoBusiness.name,
+        token,
+        user: {
+          id: 'salonadmin',
+          name: 'Chloe Vane',
+          email: 'salon-owner@glow.com',
+          platformrole: 'user',
+          memberships: membershipsFormatted
+        },
+        memberships: membershipsFormatted
+      });
+    }
+
+    // ----------------------------
+    // 🔐 DEMO CLINIC ADMIN CHECK
+    // ----------------------------
+    if ((loginIdentifier === 'clinicadmin' || username === 'clinicadmin' || email === 'clinic-owner@smile.com') && password === 'clinic123') {
+      const demoBusiness = await Business.findOne({ slug: 'smile-dental' }) || await Business.findOne({ type: 'clinic' }) || await Business.findOne({});
+
+      if (!demoBusiness) {
+        return res.status(404).json({
+          success: false,
+          message: "No clinic business found in database."
+        });
+      }
+
+      const token = jwt.sign(
+        { id: 'clinicadmin', platformrole: 'user' },
+        process.env.JWT_SECRET || 'secret123',
+        { expiresIn: '30d' }
+      );
+
+      const membershipsFormatted = [
+        {
+          businessId: demoBusiness._id.toString(),
+          businessName: demoBusiness.name,
+          businessType: demoBusiness.type,
+          role: 'owner'
+        }
+      ];
+
+      return res.json({
+        success: true,
+        role: 'owner',
+        businessId: demoBusiness._id,
+        businessName: demoBusiness.name,
+        token,
+        user: {
+          id: 'clinicadmin',
+          name: 'Dr. Marcus Vance',
+          email: 'clinic-owner@smile.com',
           platformrole: 'user',
           memberships: membershipsFormatted
         },
