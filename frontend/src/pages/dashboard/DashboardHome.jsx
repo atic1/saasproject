@@ -1908,6 +1908,18 @@ const DashboardHome = () => {
           border-color: ${currentAccent};
           background-color: hsla(var(--bg-surface));
         }
+        .modal-body select option,
+        .modal-form select option,
+        .form-input option {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+        [data-theme="light"] .modal-body select option,
+        [data-theme="light"] .modal-form select option,
+        [data-theme="light"] .form-input option {
+          background-color: #ffffff;
+          color: #0f172a;
+        }
         .form-row {
           display: flex;
           gap: 16px;

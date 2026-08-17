@@ -90,6 +90,38 @@
   a {
     transition: color var(--transition-fast);
   }
+
+  /* Universal Select & Option Theme Styling */
+  select {
+    color-scheme: light;
+  }
+
+  [data-theme="dark"] select,
+  .dark select,
+  .dark-theme select,
+  .admin-theme select {
+    color-scheme: dark;
+  }
+
+  /* Default light mode options */
+  option,
+  select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Dark mode options */
+  [data-theme="dark"] option,
+  .dark option,
+  .dark-theme option,
+  .admin-theme option,
+  [data-theme="dark"] select option,
+  .dark select option,
+  .dark-theme select option,
+  .admin-theme select option {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+  }
 }
 
 /* ====================================================

@@ -443,6 +443,16 @@ const Customers = () => {
           border-color: hsla(var(--primary));
           background-color: hsla(var(--bg-surface));
         }
+        .modal-form select option,
+        .select-input option {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+        [data-theme="light"] .modal-form select option,
+        [data-theme="light"] .select-input option {
+          background-color: #ffffff;
+          color: #0f172a;
+        }
         
         .page-title-row {
           display: flex;

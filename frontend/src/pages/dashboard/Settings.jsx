@@ -681,6 +681,15 @@ const SettingsPage = () => {
             grid-template-columns: 1fr;
           }
         }
+
+        select option {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+        [data-theme="light"] select option {
+          background-color: #ffffff;
+          color: #0f172a;
+        }
       `}</style>
     </div>
   );

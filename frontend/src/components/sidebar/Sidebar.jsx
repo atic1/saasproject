@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Sparkles, LayoutDashboard, Users, Calendar, CreditCard, 
   BarChart3, Settings, ShieldAlert, LogOut, Briefcase, 
@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout, isSuperAdmin, businessType } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -94,6 +95,30 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   };
 
+  const isLinkActive = (targetPath) => {
+    const [targetPathname, targetSearch = ''] = targetPath.split('?');
+    
+    // Pathname must match exactly
+    if (location.pathname !== targetPathname) {
+      return false;
+    }
+
+    const currentParams = new URLSearchParams(location.search);
+    const targetParams = new URLSearchParams(targetSearch);
+
+    const currentTab = currentParams.get('tab');
+    const targetTab = targetParams.get('tab');
+
+    // If link specifies a query tab (e.g. ?tab=trainers, ?tab=staff, ?tab=services, etc.)
+    if (targetTab) {
+      return currentTab === targetTab;
+    }
+
+    // If link does NOT specify a query tab (e.g. default /app/dashboard)
+    // Only active if URL has no tab or is explicitly 'overview'
+    return !currentTab || currentTab === 'overview';
+  };
+
   const links = getSidebarLinks();
   const themeClass = isSuperAdmin ? 'admin-theme' : `tenant-${businessType}`;
 
@@ -113,10 +138,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         <ul>
           {links.map((link, idx) => (
             <li key={idx}>
-              <NavLink 
+              <Link 
                 to={link.path} 
-                end={link.path === '/app/dashboard' || link.path === '/super-admin'}
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                className={`sidebar-link ${isLinkActive(link.path) ? 'active' : ''}`}
                 onClick={onClose}
               >
                 <span className="link-icon">{link.icon}</span>
@@ -124,7 +148,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 {link.badge && (
                   <span className="link-badge">{link.badge}</span>
                 )}
-              </NavLink>
+              </Link>
             </li>
           ))}
         </ul>
