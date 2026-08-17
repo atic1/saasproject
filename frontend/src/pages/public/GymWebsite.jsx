@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import API_BASE from '../../config/api.js';
 import SalonWebsite from './SalonWebsite';
+import ClinicWebsite from './ClinicWebsite';
 import {
   Phone, Mail, MapPin, Clock,
   Star, ChevronRight, Dumbbell, Zap, Heart, Target,
@@ -160,6 +161,11 @@ const GymWebsite = () => {
   // Render Salon UI if business type is salon
   if (data.business?.type === 'salon') {
     return <SalonWebsite data={data} slug={slug} />;
+  }
+
+  // Render Clinic / Dental UI if business type is clinic
+  if (data.business?.type === 'clinic') {
+    return <ClinicWebsite data={data} slug={slug} />;
   }
 
   const { business, gymWebsite: gw = {}, plans = [], trainers = [], services = [], gallery = [] } = data;
