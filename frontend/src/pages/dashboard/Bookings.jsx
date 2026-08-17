@@ -785,6 +785,23 @@ const Bookings = () => {
           background-color: hsl(var(--primary-hover)) !important;
           transform: translateY(-1px);
         }
+
+        .action-select, select {
+          border-radius: var(--radius-md);
+          border: 1px solid hsla(var(--border));
+          background-color: hsla(var(--bg-base), 0.6);
+          color: hsla(var(--text-main));
+          outline: none;
+        }
+        .action-select option, select option {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+        [data-theme="light"] .action-select option,
+        [data-theme="light"] select option {
+          background-color: #ffffff;
+          color: #0f172a;
+        }
       `}</style>
     </div>
   );

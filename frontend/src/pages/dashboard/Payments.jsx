@@ -453,6 +453,23 @@ const Payments = () => {
             width: 100%;
           }
         }
+
+        .form-input, select {
+          border-radius: var(--radius-md);
+          border: 1px solid hsla(var(--border));
+          background-color: hsla(var(--bg-base), 0.6);
+          color: hsla(var(--text-main));
+          outline: none;
+        }
+        .form-input option, select option {
+          background-color: #0f172a;
+          color: #f8fafc;
+        }
+        [data-theme="light"] .form-input option,
+        [data-theme="light"] select option {
+          background-color: #ffffff;
+          color: #0f172a;
+        }
       `}</style>
     </div>
   );
