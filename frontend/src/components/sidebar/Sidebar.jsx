@@ -66,8 +66,10 @@ const Sidebar = ({ isOpen, onClose }) => {
           { label: 'Salon Customers', path: '/app/customers', icon: <Users size={20} /> },
           { label: 'Stylists & Staff', path: '/app/dashboard?tab=staff', icon: <UserCheck size={20} /> },
           { label: 'Beauty Services', path: '/app/dashboard?tab=services', icon: <Scissors size={20} /> },
+          { label: 'Offers & Promos', path: '/app/dashboard?tab=offers', icon: <Sparkles size={20} /> },
           { label: 'Bills & Checkout', path: '/app/payments', icon: <CreditCard size={20} /> },
           { label: 'Sales Reports', path: '/app/reports', icon: <BarChart3 size={20} /> },
+          { label: 'Salon Website', path: '/app/gym-website', icon: <Globe size={20} /> },
           { label: 'Salon Settings', path: '/app/settings', icon: <Settings size={20} /> },
         ];
       case 'clinic':

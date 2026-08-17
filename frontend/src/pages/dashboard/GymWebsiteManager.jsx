@@ -753,6 +753,8 @@ const GymWebsiteManager = () => {
   const [slug, setSlug] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const isSalon = activeBusiness?.businessType === 'salon';
+
   useEffect(() => {
     // Fetch slug from backend
     const token = localStorage.getItem('saas_token');
@@ -782,9 +784,9 @@ const GymWebsiteManager = () => {
 
   const tabs = [
     { id: 'basic',   label: 'Basic Info',       icon: <Info size={18} /> },
-    { id: 'plans',   label: 'Membership Plans',  icon: <CreditCard size={18} /> },
-    { id: 'trainers',label: 'Trainers',          icon: <Users size={18} /> },
-    { id: 'services',label: 'Services',          icon: <Zap size={18} /> },
+    { id: 'plans',   label: isSalon ? 'Service Packages' : 'Membership Plans', icon: <CreditCard size={18} /> },
+    { id: 'trainers',label: isSalon ? 'Stylists & Experts' : 'Trainers',       icon: <Users size={18} /> },
+    { id: 'services',label: isSalon ? 'Beauty Services' : 'Services',          icon: <Zap size={18} /> },
     { id: 'gallery', label: 'Gallery',           icon: <Image size={18} /> },
     { id: 'social',  label: 'Social Links',      icon: <Share2 size={18} /> },
     { id: 'hours',   label: 'Business Hours',    icon: <Clock size={18} /> }
@@ -796,13 +798,17 @@ const GymWebsiteManager = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: isSalon ? 'linear-gradient(135deg,#ec4899,#be185d)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Globe size={20} color="#fff" />
             </div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'hsla(var(--text-main,0,0%,7%),1)', margin: 0 }}>Gym Website</h1>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'hsla(var(--text-main,0,0%,7%),1)', margin: 0 }}>
+              {isSalon ? 'Salon Website' : 'Website Manager'}
+            </h1>
           </div>
           <p style={{ color: 'hsla(var(--text-muted,0,0%,45%),1)', fontSize: '0.95rem', margin: 0 }}>
-            Manage your public gym website content
+            {isSalon
+              ? 'Manage your public salon website content, beauty services, and stylists'
+              : 'Manage your public website content and services'}
           </p>
         </div>
 

@@ -309,6 +309,8 @@ export const AuthProvider = ({ children }) => {
   const backendCredentialMap = {
     'gym-owner@fitzone.com': { username: 'admin', password: 'admin123' },
     'admin@saas.com':        { username: 'superadmin', password: 'superadmin123' },
+    'salon-owner@glow.com':  { username: 'salonadmin', password: 'salon123' },
+    'clinic-owner@smile.com': { username: 'clinicadmin', password: 'clinic123' },
   };
 
   const quickLogin = async (presetEmail) => {

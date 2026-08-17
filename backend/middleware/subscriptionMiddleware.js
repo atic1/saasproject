@@ -28,7 +28,13 @@ const resolveBusinessSubscription = async (business) => {
 
 const requireActiveSubscription = async (req, res, next) => {
   try {
+    // Super admins and demo admin shortcuts bypass subscription check
     if (req.user?.platformrole === 'super_admin') {
+      return next();
+    }
+
+    // Owners and managers always get through — they manage the subscription themselves
+    if (['owner', 'manager'].includes(req.role)) {
       return next();
     }
 

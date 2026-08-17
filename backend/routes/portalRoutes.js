@@ -88,22 +88,48 @@ router.get('/business/:slug/staff', async (req, res) => {
       return res.status(404).json({ message: 'Business not found' });
     }
 
-    // Find all BusinessMembers of role staff/trainer/stylist/doctor
-    const members = await BusinessMember.find({
-      businessId: business._id,
-      role: { $in: ['staff', 'trainer', 'doctor', 'stylist', 'owner', 'manager'] }
-    }).populate('userId', 'name email phone avatarUrl');
+    // Find both BusinessMembers and registered Trainers/Stylists/Staff
+    const [members, trainers] = await Promise.all([
+      BusinessMember.find({
+        businessId: business._id,
+        role: { $in: ['staff', 'trainer', 'doctor', 'stylist', 'owner', 'manager'] }
+      }).populate('userId', 'name email phone avatarUrl'),
+      Trainer.find({ businessId: business._id, isActive: true })
+    ]);
 
-    const staffList = members
-      .filter(m => m.userId)
-      .map(m => ({
-        id: m.userId._id,
-        name: m.userId.name,
-        email: m.userId.email,
-        phone: m.userId.phone,
-        role: m.role,
-        avatarUrl: m.userId.avatarUrl
-      }));
+    const staffList = [];
+    const seenIds = new Set();
+
+    // 1. Add trainers/stylists/staff added from dashboard
+    trainers.forEach(t => {
+      seenIds.add(t._id.toString());
+      staffList.push({
+        id: t._id,
+        _id: t._id,
+        name: t.name,
+        email: '',
+        phone: '',
+        role: t.specialization || 'Staff Specialist',
+        specialization: t.specialization,
+        avatarUrl: t.photo || ''
+      });
+    });
+
+    // 2. Add team members with user platform accounts
+    members
+      .filter(m => m.userId && !seenIds.has(m.userId._id.toString()))
+      .forEach(m => {
+        staffList.push({
+          id: m.userId._id,
+          _id: m.userId._id,
+          name: m.userId.name,
+          email: m.userId.email,
+          phone: m.userId.phone,
+          role: m.role,
+          specialization: m.role,
+          avatarUrl: m.userId.avatarUrl
+        });
+      });
 
     res.json(staffList);
   } catch (error) {
@@ -296,6 +322,9 @@ router.post('/bookings', protect, async (req, res) => {
       const staffUser = await User.findById(staffId);
       if (staffUser) {
         staffName = staffUser.name;
+      } else {
+        const staffTrainer = await Trainer.findById(staffId);
+        if (staffTrainer) staffName = staffTrainer.name;
       }
     }
 

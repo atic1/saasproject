@@ -9,6 +9,252 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import API_BASE from '../../config/api.js';
 
+// ── Offer Modal (top-level to prevent remount on every keystroke) ──────────────
+function OfferModal({ show, editingOffer, offerForm, setOfferForm, onClose, onSubmit, onBannerUpload, currentAccent }) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+        <div className="modal-header">
+          <h3>{editingOffer ? 'Edit Special Promo Offer' : 'Create Special Promo Offer'}</h3>
+          <button type="button" onClick={onClose} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <form onSubmit={onSubmit} className="modal-body">
+          <div className="form-group">
+            <label>Offer Name / Title *</label>
+            <input className="form-input" type="text" required value={offerForm.name} onChange={e => setOfferForm(prev => ({...prev, name: e.target.value}))} placeholder="e.g. Summer Festival 20% Discount, Festival Special" />
+          </div>
+          <div className="form-group">
+            <label>Description *</label>
+            <textarea className="form-input" rows={2} required value={offerForm.description} onChange={e => setOfferForm(prev => ({...prev, description: e.target.value}))} placeholder="Describe what this promo offer includes..." />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Promo Code</label>
+              <input className="form-input" type="text" placeholder="e.g. SAVE20" value={offerForm.code} onChange={e => setOfferForm(prev => ({...prev, code: e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label>Discount Type</label>
+              <select className="form-input" value={offerForm.discountType} onChange={e => setOfferForm(prev => ({...prev, discountType: e.target.value}))}>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed_amount">Fixed Amount (NPR)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Value *</label>
+              <input className="form-input" type="number" required min="1" value={offerForm.discountValue} onChange={e => setOfferForm(prev => ({...prev, discountValue: e.target.value}))} placeholder="20" />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Start Date *</label>
+              <input className="form-input" type="date" required value={offerForm.startDate} onChange={e => setOfferForm(prev => ({...prev, startDate: e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label>End Date *</label>
+              <input className="form-input" type="date" required value={offerForm.endDate} onChange={e => setOfferForm(prev => ({...prev, endDate: e.target.value}))} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Offer Banner Image</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+              {offerForm.bannerImage ? (
+                <img src={offerForm.bannerImage} alt="Banner Preview" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
+              ) : (
+                <div style={{ width: '80px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Banner</div>
+              )}
+              <input type="file" accept="image/*" onChange={onBannerUpload} style={{ display: 'none' }} id="offer-banner-file" />
+              <label htmlFor="offer-banner-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
+            </div>
+            <input className="form-input" type="text" placeholder="Or paste Banner Image URL..." value={offerForm.bannerImage} onChange={e => setOfferForm(prev => ({...prev, bannerImage: e.target.value}))} />
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
+            <input type="checkbox" id="offer-active" checked={offerForm.isActive} onChange={e => setOfferForm(prev => ({...prev, isActive: e.target.checked}))} />
+            <label htmlFor="offer-active" style={{ margin: 0, cursor: 'pointer' }}>Offer is Active / Published</label>
+          </div>
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>
+              {editingOffer ? 'Update Offer' : 'Save Offer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Plan Modal (top-level to prevent remount on every keystroke) ──────────────
+function PlanModal({ show, editingPlan, planForm, setPlanForm, onClose, onSubmit, currentAccent }) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+        <div className="modal-header">
+          <h3>{editingPlan ? 'Edit Membership Plan' : 'Create Membership Plan'}</h3>
+          <button type="button" onClick={onClose} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <form onSubmit={onSubmit} className="modal-body">
+          <div className="form-group">
+            <label>Plan Name *</label>
+            <input className="form-input" type="text" required value={planForm.name} onChange={e => setPlanForm(prev => ({...prev, name: e.target.value}))} placeholder="e.g. Monthly Unlimited, Pro Membership" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Price (NPR) *</label>
+              <input className="form-input" type="number" required value={planForm.price} onChange={e => setPlanForm(prev => ({...prev, price: e.target.value}))} placeholder="e.g. 2500" />
+            </div>
+            <div className="form-group">
+              <label>Duration Value *</label>
+              <input className="form-input" type="number" required min="1" value={planForm.durationValue} onChange={e => setPlanForm(prev => ({...prev, durationValue: e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label>Duration Unit</label>
+              <select className="form-input" value={planForm.durationUnit} onChange={e => setPlanForm(prev => ({...prev, durationUnit: e.target.value}))}>
+                <option value="day">Day(s)</option>
+                <option value="week">Week(s)</option>
+                <option value="month">Month(s)</option>
+                <option value="year">Year(s)</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Features (comma separated)</label>
+            <textarea className="form-input" rows={3} placeholder="e.g. Free Trainer, Locker Access, Unlimited Cardio" value={planForm.features} onChange={e => setPlanForm(prev => ({...prev, features: e.target.value}))} />
+          </div>
+          <div style={{ display: 'flex', gap: '20px', margin: '12px 0' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={planForm.isHighlighted} onChange={e => setPlanForm(prev => ({...prev, isHighlighted: e.target.checked}))} />
+              Highlight on Website (Badge)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={planForm.isActive} onChange={e => setPlanForm(prev => ({...prev, isActive: e.target.checked}))} />
+              Plan is Active
+            </label>
+          </div>
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>
+              {editingPlan ? 'Update Plan' : 'Save Plan'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Service Modal (top-level to prevent remount on every keystroke) ────────────
+function ServiceModal({ show, editingService, serviceForm, setServiceForm, onClose, onSubmit, currentAccent }) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="modal-header">
+          <h3>{editingService ? 'Edit Service' : 'Add New Service'}</h3>
+          <button type="button" className="btn-icon" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <form onSubmit={onSubmit} className="modal-body">
+          <div className="form-group">
+            <label>Service Name *</label>
+            <input className="form-input" required value={serviceForm.name} onChange={e => setServiceForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g. Hair Balayage, Deep Facial..." />
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea className="form-input" rows={3} value={serviceForm.description} onChange={e => setServiceForm(prev => ({ ...prev, description: e.target.value }))} placeholder="What does this service include?" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Price (NPR) *</label>
+              <input className="form-input" type="number" min="0" required value={serviceForm.price} onChange={e => setServiceForm(prev => ({ ...prev, price: e.target.value }))} placeholder="e.g. 1500" />
+            </div>
+            <div className="form-group">
+              <label>Duration (mins) *</label>
+              <input className="form-input" type="number" min="1" required value={serviceForm.duration} onChange={e => setServiceForm(prev => ({ ...prev, duration: e.target.value }))} placeholder="e.g. 60" />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Capacity (slots)</label>
+              <input className="form-input" type="number" min="1" value={serviceForm.capacity} onChange={e => setServiceForm(prev => ({ ...prev, capacity: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label>Service Type</label>
+              <select className="form-input" value={serviceForm.type} onChange={e => setServiceForm(prev => ({ ...prev, type: e.target.value }))}>
+                <option value="salon_service">Salon Service</option>
+                <option value="clinic_consultation">Clinic Consultation</option>
+                <option value="gym_class">Gym Class</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input type="checkbox" id="svc-active" checked={serviceForm.isActive} onChange={e => setServiceForm(prev => ({ ...prev, isActive: e.target.checked }))} />
+            <label htmlFor="svc-active" style={{ margin: 0, cursor: 'pointer' }}>Active (visible to customers)</label>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>
+              {editingService ? 'Update Service' : 'Create Service'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Trainer / Staff Modal (top-level to prevent remount on every keystroke) ───
+function TrainerModal({ show, editingTrainer, trainerForm, setTrainerForm, onClose, onSubmit, onPhotoUpload, currentAccent, businessType }) {
+  if (!show) return null;
+  const roleLabel = businessType === 'salon' ? 'Stylist / Staff' : businessType === 'clinic' ? 'Doctor / Specialist' : 'Trainer';
+  const rolePlaceholder = businessType === 'salon' ? 'e.g. Hair Stylist, Colorist, Nail Artist' : businessType === 'clinic' ? 'e.g. Orthodontist, Dermatologist' : 'e.g. Bodybuilding, Yoga, CrossFit';
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="modal-header">
+          <h3>{editingTrainer ? `Edit ${roleLabel}` : `Add New ${roleLabel}`}</h3>
+          <button type="button" onClick={onClose} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <form onSubmit={onSubmit} className="modal-body">
+          <div className="form-group">
+            <label>{roleLabel} Full Name *</label>
+            <input className="form-input" type="text" required value={trainerForm.name} onChange={e => setTrainerForm(prev => ({...prev, name: e.target.value}))} placeholder="e.g. Alex Johnson" />
+          </div>
+          <div className="form-group">
+            <label>Specialization *</label>
+            <input className="form-input" type="text" placeholder={rolePlaceholder} required value={trainerForm.specialization} onChange={e => setTrainerForm(prev => ({...prev, specialization: e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label>Experience (Years / Bio) *</label>
+            <input className="form-input" type="text" placeholder="e.g. 5+ Years Experience" required value={trainerForm.experience} onChange={e => setTrainerForm(prev => ({...prev, experience: e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label>{roleLabel} Photo</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+              {trainerForm.photo ? (
+                <img src={trainerForm.photo} alt="Preview" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
+              ) : (
+                <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Photo</div>
+              )}
+              <input type="file" accept="image/*" onChange={onPhotoUpload} style={{ display: 'none' }} id="trainer-photo-file" />
+              <label htmlFor="trainer-photo-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
+            </div>
+            <input className="form-input" type="text" placeholder="Or paste Photo URL..." value={trainerForm.photo} onChange={e => setTrainerForm(prev => ({...prev, photo: e.target.value}))} />
+          </div>
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>
+              {editingTrainer ? `Update ${roleLabel}` : `Save ${roleLabel}`}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const DashboardHome = () => {
   const [searchParams] = useSearchParams();
   const { user, isSuperAdmin, businessType, businessId } = useAuth();
@@ -17,10 +263,10 @@ const DashboardHome = () => {
   
   // Custom theme colors for each business type
   const themeColors = {
-    gym: 'var(--accent-gym)',
-    salon: 'var(--accent-salon)',
-    clinic: 'var(--accent-clinic)',
-    superadmin: 'var(--primary)'
+    gym: 'hsl(var(--accent-gym))',
+    salon: 'hsl(var(--accent-salon))',
+    clinic: 'hsl(var(--accent-clinic))',
+    superadmin: 'hsl(var(--primary))'
   };
   
   const currentAccent = isSuperAdmin ? themeColors.superadmin : themeColors[businessType];
@@ -72,6 +318,7 @@ const DashboardHome = () => {
   const [plans, setPlans] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [services, setServices] = useState([]);
   const [tabLoading, setTabLoading] = useState(false);
 
   // Modals & Forms State
@@ -86,6 +333,12 @@ const DashboardHome = () => {
   const [showTrainerModal, setShowTrainerModal] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState(null);
   const [trainerForm, setTrainerForm] = useState({ name: '', specialization: '', experience: '', photo: '' });
+
+  // Salon Services Modal State
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [editingService, setEditingService] = useState(null);
+  const serviceTypeForBiz = businessType === 'salon' ? 'salon_service' : businessType === 'clinic' ? 'clinic_consultation' : 'general';
+  const [serviceForm, setServiceForm] = useState({ name: '', description: '', duration: '', price: '', capacity: '1', type: serviceTypeForBiz, isActive: true });
 
   // Fetch logic for directories
   const fetchPlans = async () => {
@@ -136,14 +389,36 @@ const DashboardHome = () => {
     }
   };
 
+  const fetchServices = async () => {
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+    try {
+      setTabLoading(true);
+      const res = await fetch(`${API_BASE}/api/services`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      if (res.ok) setServices(await res.json());
+      else {
+        const err = await res.json().catch(() => ({}));
+        console.warn('Services fetch error:', err.message || res.status);
+      }
+    } catch (err) {
+      console.error('fetchServices error:', err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isSuperAdmin) return;
     if (activeTab === 'plans') {
       fetchPlans();
-    } else if (activeTab === 'trainers') {
+    } else if (activeTab === 'trainers' || activeTab === 'staff' || activeTab === 'doctors') {
       fetchTrainers();
     } else if (activeTab === 'offers') {
       fetchOffers();
+    } else if (activeTab === 'services') {
+      fetchServices();
     }
   }, [activeTab, businessId]);
 
@@ -219,7 +494,10 @@ const DashboardHome = () => {
       description: offerForm.description,
       code: offerForm.code || undefined,
       discount: { type: offerForm.discountType, value: Number(offerForm.discountValue) },
-      validity: { startDate: new Date(offerForm.startDate), endDate: new Date(offerForm.endDate) },
+      validity: {
+        startDate: (() => { const d = new Date(offerForm.startDate); d.setHours(0,0,0,0); return d; })(),
+        endDate: (() => { const d = new Date(offerForm.endDate); d.setHours(23,59,59,999); return d; })()
+      },
       display: { bannerImage: offerForm.bannerImage },
       isActive: offerForm.isActive,
       status: offerForm.isActive ? 'active' : 'paused'
@@ -748,63 +1026,8 @@ const DashboardHome = () => {
     );
   };
 
-  // --- GYM TABS CUSTOM RENDERS & MODALS ---
-  const PlanModal = () => {
-    if (!showPlanModal) return null;
-    return (
-      <div className="modal-overlay">
-        <div className="modal-content glass">
-          <div className="modal-header">
-            <h3>{editingPlan ? 'Edit Membership Plan' : 'Create Membership Plan'}</h3>
-            <button onClick={() => setShowPlanModal(false)} className="close-btn"><X size={18} /></button>
-          </div>
-          <form onSubmit={handlePlanSave} className="modal-form">
-            <div className="form-group">
-              <label>Plan Name</label>
-              <input type="text" required value={planForm.name} onChange={e => setPlanForm({...planForm, name: e.target.value})} />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Price (NPR)</label>
-                <input type="number" required value={planForm.price} onChange={e => setPlanForm({...planForm, price: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Duration Value</label>
-                <input type="number" required value={planForm.durationValue} onChange={e => setPlanForm({...planForm, durationValue: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Duration Unit</label>
-                <select value={planForm.durationUnit} onChange={e => setPlanForm({...planForm, durationUnit: e.target.value})}>
-                  <option value="day">Day(s)</option>
-                  <option value="week">Week(s)</option>
-                  <option value="month">Month(s)</option>
-                  <option value="year">Year(s)</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Features (comma separated list)</label>
-              <textarea placeholder="e.g. Free Trainer, Locker, Group Classes" value={planForm.features} onChange={e => setPlanForm({...planForm, features: e.target.value})} />
-            </div>
-            <div className="form-row" style={{ gap: '20px', margin: '10px 0' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={planForm.isHighlighted} onChange={e => setPlanForm({...planForm, isHighlighted: e.target.checked})} />
-                Highlight on website (Badge)
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={planForm.isActive} onChange={e => setPlanForm({...planForm, isActive: e.target.checked})} />
-                Plan is Active
-              </label>
-            </div>
-            <div className="modal-footer">
-              <button type="button" onClick={() => setShowPlanModal(false)} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Plan</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
+    // --- GYM & TENANT TABS CUSTOM RENDERS & MODALS ---
+
 
   const openEditPlan = (plan) => {
     setEditingPlan(plan);
@@ -896,84 +1119,20 @@ const DashboardHome = () => {
             </div>
           )}
         </div>
-        <PlanModal />
+        <PlanModal
+          show={showPlanModal}
+          editingPlan={editingPlan}
+          planForm={planForm}
+          setPlanForm={setPlanForm}
+          onClose={() => setShowPlanModal(false)}
+          onSubmit={handlePlanSave}
+          currentAccent={currentAccent}
+        />
       </div>
     );
   };
 
-  const OfferModal = () => {
-    if (!showOfferModal) return null;
-    return (
-      <div className="modal-overlay">
-        <div className="modal-content glass">
-          <div className="modal-header">
-            <h3>{editingOffer ? 'Edit Special Offer' : 'Create Special Offer'}</h3>
-            <button onClick={() => setShowOfferModal(false)} className="close-btn"><X size={18} /></button>
-          </div>
-          <form onSubmit={handleOfferSave} className="modal-form">
-            <div className="form-group">
-              <label>Offer Name / Title</label>
-              <input type="text" required value={offerForm.name} onChange={e => setOfferForm({...offerForm, name: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <textarea required value={offerForm.description} onChange={e => setOfferForm({...offerForm, description: e.target.value})} />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Promo Code (Optional)</label>
-                <input type="text" placeholder="e.g. GETFIT20" value={offerForm.code} onChange={e => setOfferForm({...offerForm, code: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Discount Type</label>
-                <select value={offerForm.discountType} onChange={e => setOfferForm({...offerForm, discountType: e.target.value})}>
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed_amount">Fixed Amount (NPR)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Discount Value</label>
-                <input type="number" required value={offerForm.discountValue} onChange={e => setOfferForm({...offerForm, discountValue: e.target.value})} />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Start Date</label>
-                <input type="date" required value={offerForm.startDate} onChange={e => setOfferForm({...offerForm, startDate: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>End Date</label>
-                <input type="date" required value={offerForm.endDate} onChange={e => setOfferForm({...offerForm, endDate: e.target.value})} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Offer Banner Image</label>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                {offerForm.bannerImage ? (
-                  <img src={offerForm.bannerImage} alt="Banner Preview" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
-                ) : (
-                  <div style={{ width: '80px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Banner</div>
-                )}
-                <input type="file" accept="image/*" onChange={handleOfferBannerUpload} style={{ display: 'none' }} id="offer-banner-file" />
-                <label htmlFor="offer-banner-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
-              </div>
-              <input type="text" placeholder="Or paste Banner Image URL..." value={offerForm.bannerImage} onChange={e => setOfferForm({...offerForm, bannerImage: e.target.value})} />
-            </div>
-            <div className="form-row" style={{ gap: '20px', margin: '10px 0' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={offerForm.isActive} onChange={e => setOfferForm({...offerForm, isActive: e.target.checked})} />
-                Offer is Active / Published
-              </label>
-            </div>
-            <div className="modal-footer">
-              <button type="button" onClick={() => setShowOfferModal(false)} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Offer</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
+
 
   const openEditOffer = (offer) => {
     setEditingOffer(offer);
@@ -997,13 +1156,152 @@ const DashboardHome = () => {
     setShowOfferModal(true);
   };
 
+  // ── Salon Services CRUD Tab ─────────────────────────────────
+  const handleServiceSave = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    if (!token || !businessId) return;
+    const url = editingService
+      ? `${API_BASE}/api/services/${editingService._id}`
+      : `${API_BASE}/api/services`;
+    const method = editingService ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId },
+        body: JSON.stringify({
+          name: serviceForm.name,
+          description: serviceForm.description,
+          duration: Number(serviceForm.duration),
+          price: Number(serviceForm.price),
+          capacity: Number(serviceForm.capacity) || 1,
+          type: serviceForm.type || serviceTypeForBiz,
+          isActive: serviceForm.isActive
+        })
+      });
+      if (res.ok) {
+        setShowServiceModal(false);
+        setEditingService(null);
+        setServiceForm({ name: '', description: '', duration: '', price: '', capacity: '1', type: serviceTypeForBiz, isActive: true });
+        fetchServices();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.message || 'Error saving service');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleServiceDelete = async (serviceId) => {
+    if (!confirm('Delete this service?')) return;
+    const token = localStorage.getItem('saas_token');
+    try {
+      await fetch(`${API_BASE}/api/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'X-Business-Id': businessId }
+      });
+      fetchServices();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const openAddService = () => {
+    setEditingService(null);
+    setServiceForm({ name: '', description: '', duration: '', price: '', capacity: '1', type: serviceTypeForBiz, isActive: true });
+    setShowServiceModal(true);
+  };
+
+  const openEditService = (svc) => {
+    setEditingService(svc);
+    setServiceForm({
+      name: svc.name || '',
+      description: svc.description || '',
+      duration: svc.duration?.toString() || '',
+      price: svc.price?.toString() || '',
+      capacity: svc.capacity?.toString() || '1',
+      type: svc.type || serviceTypeForBiz,
+      isActive: svc.isActive !== false
+    });
+    setShowServiceModal(true);
+  };
+
+
+
+  const renderSalonServicesTab = () => (
+    <div className="sub-panel animate-fade">
+      <div className="card-table-wrapper glass">
+        <div className="table-header">
+          <h3>{businessType === 'salon' ? 'Beauty Services' : 'Services'}</h3>
+          <button className="btn btn-primary" onClick={openAddService} style={{ backgroundColor: currentAccent }}>
+            <PlusCircle size={16} /> Add Service
+          </button>
+        </div>
+        {tabLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading services...</div>
+        ) : services.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No services configured yet. Add your first service!</p>
+            <button className="btn btn-primary" onClick={openAddService} style={{ backgroundColor: currentAccent }}>Add First Service</button>
+          </div>
+        ) : (
+          <div className="responsive-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service Name</th>
+                  <th>Description</th>
+                  <th>Price (NPR)</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {services.map(svc => (
+                  <tr key={svc._id}>
+                    <td><strong>{svc.name}</strong></td>
+                    <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{svc.description || '—'}</td>
+                    <td><span style={{ fontWeight: 700, color: currentAccent }}>NPR {svc.price?.toLocaleString()}</span></td>
+                    <td>{svc.duration} mins</td>
+                    <td>
+                      <span className={`badge ${svc.isActive ? 'active' : 'pending'}`}>
+                        {svc.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={() => openEditService(svc)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: currentAccent }}><Edit size={16} /></button>
+                        <button onClick={() => handleServiceDelete(svc._id)} className="btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <ServiceModal
+        show={showServiceModal}
+        editingService={editingService}
+        serviceForm={serviceForm}
+        setServiceForm={setServiceForm}
+        onClose={() => setShowServiceModal(false)}
+        onSubmit={handleServiceSave}
+        currentAccent={currentAccent}
+      />
+    </div>
+  );
+
   const renderGymOffersTab = () => {
     return (
       <div className="sub-panel animate-fade">
         <div className="card-table-wrapper glass">
           <div className="table-header">
-            <h3>Gym Offers & Promotions</h3>
-            <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent }}>
+            <h3>{businessType === 'salon' ? 'Salon Offers & Promos' : 'Gym Offers & Promotions'}</h3>
+            <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent, color: '#ffffff', fontWeight: 600 }}>
               <PlusCircle size={16} /> Create Promo Offer
             </button>
           </div>
@@ -1011,8 +1309,8 @@ const DashboardHome = () => {
             <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading offers...</div>
           ) : offers.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
-              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No active gym promo offers.</p>
-              <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent }}>Configure First Promo</button>
+              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No active promo offers.</p>
+              <button className="btn btn-primary" onClick={openAddOffer} style={{ backgroundColor: currentAccent, color: '#ffffff', fontWeight: 600 }}>Configure First Promo</button>
             </div>
           ) : (
             <div className="responsive-table">
@@ -1074,55 +1372,21 @@ const DashboardHome = () => {
             </div>
           )}
         </div>
-        <OfferModal />
+        <OfferModal
+          show={showOfferModal}
+          editingOffer={editingOffer}
+          offerForm={offerForm}
+          setOfferForm={setOfferForm}
+          onClose={() => setShowOfferModal(false)}
+          onSubmit={handleOfferSave}
+          onBannerUpload={handleOfferBannerUpload}
+          currentAccent={currentAccent}
+        />
       </div>
     );
   };
 
-  const TrainerModal = () => {
-    if (!showTrainerModal) return null;
-    return (
-      <div className="modal-overlay">
-        <div className="modal-content glass">
-          <div className="modal-header">
-            <h3>{editingTrainer ? 'Edit Gym Trainer' : 'Add Gym Trainer'}</h3>
-            <button onClick={() => setShowTrainerModal(false)} className="close-btn"><X size={18} /></button>
-          </div>
-          <form onSubmit={handleTrainerSave} className="modal-form">
-            <div className="form-group">
-              <label>Trainer Full Name</label>
-              <input type="text" required value={trainerForm.name} onChange={e => setTrainerForm({...trainerForm, name: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Specialization</label>
-              <input type="text" placeholder="e.g. Bodybuilding, Yoga, Zumba" required value={trainerForm.specialization} onChange={e => setTrainerForm({...trainerForm, specialization: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Experience (Years / Description)</label>
-              <input type="text" placeholder="e.g. 5+ Years Experience" required value={trainerForm.experience} onChange={e => setTrainerForm({...trainerForm, experience: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Trainer Photo</label>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                {trainerForm.photo ? (
-                  <img src={trainerForm.photo} alt="Trainer Preview" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid hsla(var(--border))' }} />
-                ) : (
-                  <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'hsla(var(--border), 0.1)', borderRadius: '8px', border: '1px dashed hsla(var(--border))', fontSize: '10px', color: 'hsla(var(--text-muted))' }}>No Photo</div>
-                )}
-                <input type="file" accept="image/*" onChange={handleTrainerPhotoUpload} style={{ display: 'none' }} id="trainer-photo-file" />
-                <label htmlFor="trainer-photo-file" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', margin: 0 }}>Upload File</label>
-              </div>
-              <input type="text" placeholder="Or paste Photo URL..." value={trainerForm.photo} onChange={e => setTrainerForm({...trainerForm, photo: e.target.value})} />
-            </div>
-            <div className="modal-footer">
-              <button type="button" onClick={() => setShowTrainerModal(false)} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ backgroundColor: currentAccent }}>Save Trainer</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
+
 
   const openEditTrainer = (trainer) => {
     setEditingTrainer(trainer);
@@ -1142,21 +1406,24 @@ const DashboardHome = () => {
   };
 
   const renderGymTrainersTab = () => {
+    const roleLabel = businessType === 'salon' ? 'Stylists & Staff' : businessType === 'clinic' ? 'Doctors & Specialists' : 'Club Trainers';
+    const singleRoleLabel = businessType === 'salon' ? 'Stylist / Staff' : businessType === 'clinic' ? 'Doctor' : 'Gym Trainer';
+
     return (
       <div className="sub-panel animate-fade">
         <div className="card-table-wrapper glass">
           <div className="table-header">
-            <h3>Club Trainers Registry</h3>
+            <h3>{roleLabel} Registry</h3>
             <button className="btn btn-primary" onClick={openAddTrainer} style={{ backgroundColor: currentAccent }}>
-              <PlusCircle size={16} /> Add Gym Trainer
+              <PlusCircle size={16} /> Add {singleRoleLabel}
             </button>
           </div>
           {tabLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading trainers...</div>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>Loading {roleLabel.toLowerCase()}...</div>
           ) : trainers.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
-              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No trainers registered yet.</p>
-              <button className="btn btn-primary" onClick={openAddTrainer} style={{ backgroundColor: currentAccent }}>Register First Trainer</button>
+              <p style={{ color: 'hsla(var(--text-muted))', marginBottom: '16px' }}>No {roleLabel.toLowerCase()} registered yet.</p>
+              <button className="btn btn-primary" onClick={openAddTrainer} style={{ backgroundColor: currentAccent }}>Register First {singleRoleLabel}</button>
             </div>
           ) : (
             <div className="responsive-table">
@@ -1197,7 +1464,17 @@ const DashboardHome = () => {
             </div>
           )}
         </div>
-        <TrainerModal />
+        <TrainerModal
+          show={showTrainerModal}
+          editingTrainer={editingTrainer}
+          trainerForm={trainerForm}
+          setTrainerForm={setTrainerForm}
+          onClose={() => setShowTrainerModal(false)}
+          onSubmit={handleTrainerSave}
+          onPhotoUpload={handleTrainerPhotoUpload}
+          currentAccent={currentAccent}
+          businessType={businessType}
+        />
       </div>
     );
   };
@@ -1207,7 +1484,19 @@ const DashboardHome = () => {
     if (businessType === 'gym') {
       if (activeTab === 'plans') return renderGymPlansTab();
       if (activeTab === 'offers') return renderGymOffersTab();
-      if (activeTab === 'trainers') return renderGymTrainersTab();
+      if (activeTab === 'trainers' || activeTab === 'staff') return renderGymTrainersTab();
+    }
+
+    if (businessType === 'salon') {
+      if (activeTab === 'services') return renderSalonServicesTab();
+      if (activeTab === 'offers') return renderGymOffersTab();
+      if (activeTab === 'staff' || activeTab === 'trainers') return renderGymTrainersTab();
+    }
+
+    if (businessType === 'clinic') {
+      if (activeTab === 'doctors' || activeTab === 'staff' || activeTab === 'trainers') return renderGymTrainersTab();
+      if (activeTab === 'services') return renderSalonServicesTab();
+      if (activeTab === 'offers') return renderGymOffersTab();
     }
 
     if (activeTab === 'overview') {
@@ -1317,7 +1606,7 @@ const DashboardHome = () => {
         {/* Dynamic Multi-tenant Onboarding CTA */}
         {!isSuperAdmin && (
           <div className="quick-actions-row">
-            <Link to="/app/bookings" className="btn btn-primary" style={{ backgroundColor: currentAccent, boxShadow: `0 4px 10px 0 rgba(from ${currentAccent} r g b / 0.2)` }}>
+            <Link to="/app/bookings" className="btn btn-primary" style={{ backgroundColor: currentAccent, color: '#ffffff' }}>
               <PlusCircle size={16} />
               <span>Create Reservation</span>
             </Link>
@@ -1536,18 +1825,17 @@ const DashboardHome = () => {
           z-index: 1000;
           animation: modalFadeIn 0.2s ease-out;
         }
-        .modal-content {
-          width: 90%;
-          max-width: 550px;
+        .modal-card, .modal-content {
+          width: 92%;
+          max-width: 540px;
           border-radius: var(--radius-lg);
           border: 1px solid hsla(var(--border-frosted));
-          background: hsla(var(--bg-surface-frosted));
-          backdrop-filter: blur(16px);
+          background: hsl(var(--bg-surface));
           box-shadow: var(--shadow-xl);
-          padding: 28px;
+          padding: 24px 28px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
           animation: modalScaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .modal-header {
@@ -1578,22 +1866,25 @@ const DashboardHome = () => {
           background: rgba(255, 255, 255, 0.08);
           color: hsla(var(--text-main));
         }
-        .modal-form {
+        .modal-body, .modal-form {
           display: flex;
           flex-direction: column;
           gap: 16px;
         }
-        .modal-form .form-group {
+        .modal-body .form-group, .modal-form .form-group {
           display: flex;
           flex-direction: column;
           gap: 6px;
           text-align: left;
         }
-        .modal-form .form-group label {
+        .modal-body .form-group label, .modal-form .form-group label {
           font-size: 0.85rem;
           font-weight: 700;
           color: hsla(var(--text-main));
         }
+        .modal-body .form-group input, 
+        .modal-body .form-group select, 
+        .modal-body .form-group textarea,
         .modal-form .form-group input, 
         .modal-form .form-group select, 
         .modal-form .form-group textarea {
@@ -1601,13 +1892,16 @@ const DashboardHome = () => {
           padding: 10px 14px;
           border-radius: var(--radius-md);
           border: 1px solid hsla(var(--border));
-          background-color: hsla(var(--bg-base), 0.4);
+          background-color: hsla(var(--bg-base), 0.6);
           font-family: var(--font-sans);
           font-size: 0.95rem;
           color: hsla(var(--text-main));
           outline: none;
           transition: all var(--transition-fast);
         }
+        .modal-body .form-group input:focus,
+        .modal-body .form-group select:focus,
+        .modal-body .form-group textarea:focus,
         .modal-form .form-group input:focus,
         .modal-form .form-group select:focus,
         .modal-form .form-group textarea:focus {

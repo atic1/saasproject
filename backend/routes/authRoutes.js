@@ -476,20 +476,27 @@ router.post('/login', async (req, res) => {
 //
 router.post('/customer/register', async (req, res) => {
   try {
-    const { name, phone, email, password, businessId } = req.body;
+    const { name, phone, email, password, businessId, selectedServiceId, serviceId } = req.body;
+    const targetServiceId = selectedServiceId || serviceId;
 
     if (!name || !phone || !password || !businessId) {
       return res.status(400).json({ message: "Name, phone, password, and businessId are required." });
     }
+
+    const Customer = require('../models/customer');
+    const Booking = require('../models/booking');
+    const Service = require('../models/service');
+    const GymService = require('../models/gymService');
 
     // 1. Check if global User exists
     let user = await User.findOne({
       $or: [{ phone }, { email: email || 'never_match_dummy' }]
     });
 
+    let customerObj = null;
+
     if (user) {
       // User credentials already exist. Let's see if they have a Customer record under this business
-      const Customer = require('../models/customer');
       let customer = await Customer.findOne({ phone, businessId });
       
       if (customer && customer.userId) {
@@ -501,9 +508,10 @@ router.post('/customer/register', async (req, res) => {
         customer.userId = user._id;
         if (email) customer.email = email;
         await customer.save();
+        customerObj = customer;
       } else {
         // Create new Customer profile for this business
-        await Customer.create({
+        customerObj = await Customer.create({
           businessId,
           userId: user._id,
           name,
@@ -523,14 +531,14 @@ router.post('/customer/register', async (req, res) => {
       });
 
       // 3. Create or link Customer record
-      const Customer = require('../models/customer');
       let customer = await Customer.findOne({ phone, businessId });
       if (customer) {
         customer.userId = user._id;
         if (email) customer.email = email;
         await customer.save();
+        customerObj = customer;
       } else {
-        await Customer.create({
+        customerObj = await Customer.create({
           businessId,
           userId: user._id,
           name,
@@ -538,6 +546,41 @@ router.post('/customer/register', async (req, res) => {
           email,
           status: 'active'
         });
+      }
+    }
+
+    // If customer selected a service during registration, auto-create a pending booking/subscription
+    if (targetServiceId && customerObj) {
+      try {
+        let serviceObj = await Service.findById(targetServiceId);
+        let serviceName = serviceObj ? serviceObj.name : 'Selected Service';
+        let duration = serviceObj ? serviceObj.duration : 60;
+        let price = serviceObj ? serviceObj.price : 0;
+
+        if (!serviceObj) {
+          const gymSvc = await GymService.findById(targetServiceId);
+          if (gymSvc) {
+            serviceName = gymSvc.serviceName;
+          }
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        await Booking.create({
+          businessId,
+          customerId: customerObj._id,
+          serviceId: targetServiceId,
+          serviceName,
+          date: todayStr,
+          startTime: "10:00",
+          endTime: "11:00",
+          duration,
+          totalAmount: price,
+          paymentStatus: 'unpaid',
+          status: 'pending',
+          customerNotes: `Auto-registered via signup service selection (${serviceName})`
+        });
+      } catch (svcErr) {
+        console.error("Failed to auto-create booking for selected service:", svcErr.message);
       }
     }
 
@@ -552,7 +595,8 @@ router.post('/customer/register', async (req, res) => {
         email: user.email,
         phone: user.phone,
         memberships: []
-      }
+      },
+      selectedServiceId: targetServiceId || null
     });
 
   } catch (error) {

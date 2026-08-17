@@ -5,26 +5,27 @@ const { protect } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantIsolation');
 const { requirePermission } = require('../middleware/rbac');
 const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
+const { checkTenantMatch } = require('../middleware/tenantHelper');
 
 // Get all offers for a business
 router.get('/:businessId', protect, enforceTenant, requirePermission('offer.read'), async (req, res) => {
     try {
-        if (req.params.businessId !== req.activeBusinessId) {
+        if (!checkTenantMatch(req)) {
             return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
         }
 
-        const offers = await Offer.find({ businessId: req.activeBusinessId });
+        const offers = await Offer.find({ businessId: req.activeBusinessId }).sort({ createdAt: -1 });
         res.json(offers);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+        console.error('Error fetching offers:', error);
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
 // Create a new offer
 router.post('/:businessId', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.create'), async (req, res) => {
     try {
-        if (req.params.businessId !== req.activeBusinessId) {
+        if (!checkTenantMatch(req)) {
             return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
         }
 
@@ -35,15 +36,15 @@ router.post('/:businessId', protect, enforceTenant, requireActiveSubscription, r
         await newOffer.save();
         res.status(201).json(newOffer);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+        console.error('Error creating offer:', error);
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
 // Update an offer
 router.put('/:businessId/:id', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.update'), async (req, res) => {
     try {
-        if (req.params.businessId !== req.activeBusinessId) {
+        if (!checkTenantMatch(req)) {
             return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
         }
 
@@ -63,15 +64,15 @@ router.put('/:businessId/:id', protect, enforceTenant, requireActiveSubscription
         await offer.save();
         res.json(offer);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+        console.error('Error updating offer:', error);
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
 // Delete an offer
 router.delete('/:businessId/:id', protect, enforceTenant, requireActiveSubscription, requirePermission('offer.delete'), async (req, res) => {
     try {
-        if (req.params.businessId !== req.activeBusinessId) {
+        if (!checkTenantMatch(req)) {
             return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
         }
 
@@ -82,8 +83,8 @@ router.delete('/:businessId/:id', protect, enforceTenant, requireActiveSubscript
 
         res.json({ message: 'Offer deleted successfully.' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
+        console.error('Error deleting offer:', error);
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 

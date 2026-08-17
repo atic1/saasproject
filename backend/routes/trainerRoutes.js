@@ -3,26 +3,27 @@ const router = express.Router();
 const Trainer = require('../models/trainer');
 const { protect } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantIsolation');
+const { checkTenantMatch } = require('../middleware/tenantHelper');
 
 // Get all trainers for a business
 router.get('/:businessId', protect, enforceTenant, async (req, res) => {
   try {
-    if (req.params.businessId !== req.activeBusinessId) {
+    if (!checkTenantMatch(req)) {
       return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
     }
 
     const trainers = await Trainer.find({ businessId: req.activeBusinessId }).sort({ createdAt: -1 });
     res.json(trainers);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Error fetching trainers:', error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
 // Create a new trainer
 router.post('/:businessId', protect, enforceTenant, async (req, res) => {
   try {
-    if (req.params.businessId !== req.activeBusinessId) {
+    if (!checkTenantMatch(req)) {
       return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
     }
 
@@ -42,15 +43,15 @@ router.post('/:businessId', protect, enforceTenant, async (req, res) => {
     await newTrainer.save();
     res.status(201).json(newTrainer);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Error creating trainer:', error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
 // Update a trainer
 router.put('/:businessId/:id', protect, enforceTenant, async (req, res) => {
   try {
-    if (req.params.businessId !== req.activeBusinessId) {
+    if (!checkTenantMatch(req)) {
       return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
     }
 
@@ -69,15 +70,15 @@ router.put('/:businessId/:id', protect, enforceTenant, async (req, res) => {
     await trainer.save();
     res.json(trainer);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Error updating trainer:', error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
 // Delete a trainer
 router.delete('/:businessId/:id', protect, enforceTenant, async (req, res) => {
   try {
-    if (req.params.businessId !== req.activeBusinessId) {
+    if (!checkTenantMatch(req)) {
       return res.status(403).json({ message: 'Access denied: Tenant mismatch' });
     }
 
@@ -88,8 +89,8 @@ router.delete('/:businessId/:id', protect, enforceTenant, async (req, res) => {
 
     res.json({ message: 'Trainer deleted successfully.' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Error deleting trainer:', error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
