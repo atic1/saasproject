@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const Business      = require('../models/business');
 const GymWebsite    = require('../models/gymWebsite');
 const MembershipPlan = require('../models/membershipPlan');
+const Plan          = require('../models/plan');
+const Service       = require('../models/service');
 const Trainer       = require('../models/trainer');
 const GymService    = require('../models/gymService');
 const Gallery       = require('../models/gallery');
@@ -82,33 +84,68 @@ router.get('/public/gym/:slug', async (req, res) => {
     const slug = req.params.slug.toLowerCase().trim();
 
     if (RESERVED_SLUGS.has(slug)) {
-      return res.status(404).json({ message: 'Gym not found' });
+      return res.status(404).json({ message: 'Business not found' });
     }
 
-    // Find the business by slug
-    const business = await Business.findOne({ slug, status: 'active' });
+    // Find the business by slug — allow active and pending (so newly registered businesses can preview their site)
+    const business = await Business.findOne({ slug, status: { $in: ['active', 'pending', 'pending_verification'] } });
     if (!business) {
-      return res.status(404).json({ message: 'Gym not found' });
+      return res.status(404).json({ message: 'Business not found' });
     }
 
     const bid = business._id;
 
     // Fetch all associated data in parallel
     const now = new Date();
-    const [gymWebsite, plans, trainers, services, gallery, reviews, offers] = await Promise.all([
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    const [gymWebsite, membershipPlans, saasPlans, trainers, gymServices, generalServices, gallery, reviews, offers] = await Promise.all([
       GymWebsite.findOne({ businessId: bid }),
       MembershipPlan.find({ businessId: bid, isActive: true }).sort({ price: 1 }),
+      Plan.find({ businessId: bid, isActive: true }).sort({ price: 1 }),
       Trainer.find({ businessId: bid, isActive: true }),
       GymService.find({ businessId: bid, isActive: true }),
+      Service.find({ businessId: bid, isActive: true }),
       Gallery.find({ businessId: bid }).sort({ createdAt: -1 }).limit(20),
       Review.find({ businessId: bid, isApproved: true }).sort({ createdAt: -1 }).limit(20),
       Offer.find({
         businessId: bid.toString(),
         isActive: true,
-        'validity.startDate': { $lte: now },
-        'validity.endDate':   { $gte: now }
+        'validity.endDate': { $gte: now }
       }).sort({ createdAt: -1 }).limit(10)
     ]);
+
+    // Combine plans
+    const combinedPlans = [...membershipPlans];
+    if (combinedPlans.length === 0 && saasPlans.length > 0) {
+      saasPlans.forEach(p => {
+        combinedPlans.push({
+          _id: p._id,
+          name: p.name,
+          price: p.price,
+          duration: `${p.billingCycle || 'month'}`,
+          description: p.description || '',
+          features: p.features || []
+        });
+      });
+    }
+
+    // Combine services (convert Service model format to unified service object)
+    const combinedServices = [...gymServices];
+    generalServices.forEach(s => {
+      // Check if already in gymServices by name or ID
+      if (!combinedServices.some(gs => gs.serviceName === s.name || gs._id.toString() === s._id.toString())) {
+        combinedServices.push({
+          _id: s._id,
+          serviceName: s.name,
+          description: s.description || '',
+          price: s.price,
+          duration: s.duration,
+          icon: s.type === 'salon_service' ? 'Scissors' : (s.type === 'clinic_consultation' ? 'Stethoscope' : 'Zap'),
+          isActive: s.isActive
+        });
+      }
+    });
 
     return res.json({
       business: {
@@ -120,15 +157,15 @@ router.get('/public/gym/:slug', async (req, res) => {
         contact: business.contact
       },
       gymWebsite: gymWebsite || {},
-      plans,
+      plans: combinedPlans,
       trainers,
-      services,
+      services: combinedServices,
       gallery,
       reviews,
       offers
     });
   } catch (err) {
-    console.error('Public gym fetch error:', err);
+    console.error('Public business fetch error:', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

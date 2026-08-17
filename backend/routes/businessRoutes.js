@@ -26,18 +26,45 @@ router.put('/current', protect, enforceTenant, requirePermission('business.updat
 router.get('/current/staff', protect, enforceTenant, async (req, res) => {
   try {
     const BusinessMember = require('../models/businessMember');
-    const members = await BusinessMember.find({
-      businessId: req.activeBusinessId,
-      role: { $ne: 'customer' }
-    }).populate('userId', 'name email phone');
+    const Trainer = require('../models/trainer');
 
-    const staff = members.map(m => ({
-      _id: m.userId?._id,
-      name: m.userId?.name,
-      email: m.userId?.email,
-      phone: m.userId?.phone,
-      role: m.role
-    }));
+    const [members, trainers] = await Promise.all([
+      BusinessMember.find({
+        businessId: req.activeBusinessId,
+        role: { $ne: 'customer' }
+      }).populate('userId', 'name email phone'),
+      Trainer.find({ businessId: req.activeBusinessId, isActive: true })
+    ]);
+
+    const staff = [];
+    const seen = new Set();
+
+    trainers.forEach(t => {
+      seen.add(t._id.toString());
+      staff.push({
+        _id: t._id,
+        id: t._id,
+        name: t.name,
+        email: '',
+        phone: '',
+        role: t.specialization || 'Staff',
+        specialization: t.specialization
+      });
+    });
+
+    members.forEach(m => {
+      if (m.userId && !seen.has(m.userId._id.toString())) {
+        staff.push({
+          _id: m.userId._id,
+          id: m.userId._id,
+          name: m.userId.name,
+          email: m.userId.email,
+          phone: m.userId.phone,
+          role: m.role,
+          specialization: m.role
+        });
+      }
+    });
 
     res.json(staff);
   } catch (error) {

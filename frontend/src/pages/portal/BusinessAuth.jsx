@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import API_BASE from '../../config/api.js';
 import { 
-  User, Mail, Lock, Phone, ArrowRight, Loader2, Sparkles, AlertCircle, ChevronLeft, CheckCheck
+  User, Mail, Lock, Phone, ArrowRight, Loader2, Sparkles, AlertCircle, ChevronLeft, CheckCheck, Scissors, Dumbbell
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -57,6 +57,7 @@ const BUSINESS_TYPE_ICONS = {
 
 export default function BusinessAuth({ mode: initialMode = "login" }) {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, login, isAuthenticated, setAuthenticatedUser } = useAuth();
 
@@ -65,18 +66,31 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
   const [loadingBusiness, setLoadingBusiness] = useState(true);
   const [businessError, setBusinessError] = useState("");
 
+  const [servicesList, setServicesList] = useState([]);
+
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
   // Form states
   const [loginForm, setLoginForm] = useState({ identifier: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({ name: "", phone: "", email: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({
+    name: "", phone: "", email: "", password: "", selectedServiceId: ""
+  });
+
+  const preselectedServiceId = searchParams.get('service') || searchParams.get('serviceId') || "";
 
   // Sync mode state with prop updates
   useEffect(() => {
     setMode(initialMode);
     setAuthError("");
   }, [initialMode]);
+
+  // Pre-select service from URL query param if present
+  useEffect(() => {
+    if (preselectedServiceId) {
+      setRegisterForm(prev => ({ ...prev, selectedServiceId: preselectedServiceId }));
+    }
+  }, [preselectedServiceId]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -85,22 +99,33 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
     }
   }, [isAuthenticated, business, slug, navigate]);
 
-  // Fetch Business details
+  // Fetch Business details and services
   useEffect(() => {
-    async function fetchBusiness() {
+    async function fetchBusinessData() {
       try {
         setLoadingBusiness(true);
         const res = await fetch(`${API_BASE}/api/portal/business/${slug}`);
         if (!res.ok) throw new Error("Business not found");
         const data = await res.json();
         setBusiness(data);
+
+        // Fetch services
+        try {
+          const svcRes = await fetch(`${API_BASE}/api/public/gym/${slug}`);
+          if (svcRes.ok) {
+            const svcData = await svcRes.json();
+            if (svcData.services && svcData.services.length > 0) {
+              setServicesList(svcData.services);
+            }
+          }
+        } catch (_) {}
       } catch (err) {
         setBusinessError(err.message);
       } finally {
         setLoadingBusiness(false);
       }
     }
-    fetchBusiness();
+    fetchBusinessData();
   }, [slug]);
 
   const handleLoginSubmit = async (e) => {
@@ -142,7 +167,8 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
           phone: registerForm.phone,
           email: registerForm.email || undefined,
           password: registerForm.password,
-          businessId: business._id
+          businessId: business._id,
+          selectedServiceId: registerForm.selectedServiceId || undefined
         })
       });
       const data = await res.json();
@@ -359,6 +385,34 @@ export default function BusinessAuth({ mode: initialMode = "login" }) {
                   />
                 </div>
               </div>
+
+              {/* Service Selection for Salon & Gym */}
+              {servicesList.length > 0 && (
+                <div className="form-group">
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    {business.type === 'salon' ? 'Select Preferred Service' : 'Select Desired Plan / Service'}
+                  </label>
+                  <div className="relative w-full">
+                    {business.type === 'salon' ? (
+                      <Scissors size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500" />
+                    ) : (
+                      <Dumbbell size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500" />
+                    )}
+                    <select
+                      value={registerForm.selectedServiceId}
+                      onChange={e => setRegisterForm({ ...registerForm, selectedServiceId: e.target.value })}
+                      className={`${inputCls} appearance-none cursor-pointer`}
+                    >
+                      <option value="">-- Choose a service (Optional) --</option>
+                      {servicesList.map(svc => (
+                        <option key={svc._id} value={svc._id}>
+                          {svc.serviceName || svc.name} {svc.price ? `(NPR ${svc.price})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"

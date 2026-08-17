@@ -9,21 +9,38 @@ const { enforceTenant } = require('../middleware/tenantIsolation');
 // @access  Public / Private (Public so customers can browse services on booking page)
 router.get('/', async (req, res) => {
   try {
-    // Determine business ID from header or context
-    const businessId = req.headers['x-business-id'] || req.query.businessId;
-    if (!businessId) {
+    let businessId = req.headers['x-business-id'] || req.query.businessId;
+    
+    let targetBizId = null;
+    if (businessId) {
+      if (/^[0-9a-fA-F]{24}$/.test(businessId)) {
+        targetBizId = businessId;
+      } else {
+        const Business = require('../models/business');
+        const biz = await Business.findOne({ slug: businessId });
+        if (biz) targetBizId = biz._id;
+      }
+    }
+
+    if (!targetBizId) {
+      const Business = require('../models/business');
+      const firstBiz = await Business.findOne({});
+      if (firstBiz) targetBizId = firstBiz._id;
+    }
+
+    if (!targetBizId) {
       return res.status(400).json({ message: 'businessId required in X-Business-Id header or query parameters.' });
     }
 
     const services = await Service.find({
-      businessId,
+      businessId: targetBizId,
       isActive: true
-    }).sort({ name: 1 });
+    }).sort({ createdAt: -1 });
 
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
-    res.status(500).json({ message: 'Failed to fetch services.' });
+    res.status(500).json({ message: 'Failed to fetch services.', error: error.message });
   }
 });
 

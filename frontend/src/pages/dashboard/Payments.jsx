@@ -1,87 +1,133 @@
 import { useState, useEffect } from 'react';
-import { Plus, Download, FileText } from 'lucide-react';
+import { Plus, Download, FileText, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import API_BASE from '../../config/api.js';
 
 const Payments = () => {
-  const { businessType, businessId, isSuperAdmin } = useAuth();
+  const { businessType, businessId, activeBusiness, isSuperAdmin } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [transactionError, setTransactionError] = useState(null);
 
-  const accentClass = isSuperAdmin ? 'admin' : businessType;
+  // POS Checkout Modal State
+  const [showPosModal, setShowPosModal] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [posForm, setPosForm] = useState({
+    customerId: '',
+    amount: '',
+    tax: '0',
+    discount: '0',
+    paymentMethod: 'esewa',
+    status: 'paid'
+  });
+  const [submittingPos, setSubmittingPos] = useState(false);
 
-  // =========================
-  // DEBUG: FRONTEND INIT
-  // =========================
-  useEffect(() => {
-    console.log("=== PAYMENTS PAGE LOADED ===");
-    console.log("businessId:", businessId);
-    console.log("isSuperAdmin:", isSuperAdmin);
-    console.log("businessType:", businessType);
-  }, [businessId, isSuperAdmin, businessType]);
+  const accentClass = isSuperAdmin ? 'admin' : businessType;
+  const currentAccent = businessType === 'salon' ? '#ec4899' : businessType === 'clinic' ? '#10b981' : '#f97316';
+
+  const loadInvoices = async () => {
+    const bId = activeBusiness?.businessId || businessId;
+    if (!bId) {
+      setTransactions([]);
+      setLoadingTransactions(false);
+      return;
+    }
+
+    setLoadingTransactions(true);
+    setTransactionError(null);
+
+    try {
+      const token = localStorage.getItem('saas_token');
+      const response = await fetch(`${API_BASE}/api/invoices`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Business-Id': bId
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to load invoices');
+      }
+
+      setTransactions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Invoice load failed:", err);
+      setTransactionError(err.message || 'Failed to load invoices');
+      setTransactions([]);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
 
   useEffect(() => {
     if (!isSuperAdmin) {
-      const loadInvoices = async () => {
-        console.log("=== LOAD INVOICES START ===");
-
-        if (!businessId) {
-          console.log("No businessId found, skipping fetch");
-          setTransactions([]);
-          setLoadingTransactions(false);
-          return;
-        }
-
-        setLoadingTransactions(true);
-        setTransactionError(null);
-
-        try {
-          const token = localStorage.getItem('saas_token');
-
-          console.log("Fetching invoices...");
-          console.log("token exists:", !!token);
-
-          const response = await fetch(`${API_BASE}/api/invoices`, {
-            method: "GET",
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'X-Business-Id': businessId
-            }
-          });
-
-          console.log("Invoice response status:", response.status);
-
-          const data = await response.json();
-
-          console.log("Invoice response data:", data);
-
-          if (!response.ok) {
-            throw new Error(data.message || 'Unable to load invoices');
-          }
-
-          setTransactions(Array.isArray(data) ? data : []);
-
-          console.log("Invoices loaded:", Array.isArray(data) ? data.length : 0);
-
-        } catch (err) {
-          console.error("Invoice load failed:", err);
-          setTransactionError(err.message || 'Failed to load invoices');
-          setTransactions([]);
-        } finally {
-          setLoadingTransactions(false);
-          console.log("=== LOAD INVOICES END ===");
-        }
-      };
-
       loadInvoices();
     }
-  }, [businessId, isSuperAdmin]);
+  }, [businessId, activeBusiness, isSuperAdmin]);
+
+  // Fetch customers for POS dropdown
+  useEffect(() => {
+    if (showPosModal && (activeBusiness?.businessId || businessId)) {
+      const token = localStorage.getItem('saas_token');
+      const bId = activeBusiness?.businessId || businessId;
+      fetch(`${API_BASE}/api/customers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Business-Id': bId
+        }
+      })
+        .then(res => res.json())
+        .then(data => setCustomers(Array.isArray(data) ? data : []))
+        .catch(err => console.error(err));
+    }
+  }, [showPosModal, activeBusiness, businessId]);
+
+  const handleCreateInvoice = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('saas_token');
+    const bId = activeBusiness?.businessId || businessId;
+    if (!token || !bId) return;
+
+    try {
+      setSubmittingPos(true);
+      const res = await fetch(`${API_BASE}/api/invoices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Business-Id': bId
+        },
+        body: JSON.stringify({
+          customerId: posForm.customerId || undefined,
+          amount: Number(posForm.amount),
+          tax: Number(posForm.tax) || 0,
+          discount: Number(posForm.discount) || 0,
+          paymentMethod: posForm.paymentMethod,
+          status: posForm.status
+        })
+      });
+
+      if (res.ok) {
+        setShowPosModal(false);
+        setPosForm({ customerId: '', amount: '', tax: '0', discount: '0', paymentMethod: 'esewa', status: 'paid' });
+        loadInvoices();
+        alert('POS Checkout Invoice generated successfully!');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.message || 'Failed to generate POS invoice');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating invoice');
+    } finally {
+      setSubmittingPos(false);
+    }
+  };
 
   const getPaymentsData = () => {
-    console.log("=== USING MOCK PAYMENTS DATA ===");
-
     if (isSuperAdmin) {
       return [
         { id: 'tx1', tenant: 'FitZone Gym', plan: 'Pro Enterprise', price: 14900, gateway: 'Stripe API', date: '2026-05-20', status: 'Succeeded' },
@@ -90,26 +136,28 @@ const Payments = () => {
       ];
     }
 
+    if (transactions.length > 0) return transactions;
+
+    // Default fallback demo records if no invoices exist yet
     switch (businessType) {
       case 'gym':
         return [
-          { id: 'g1', athlete: 'Mike Ross', pack: 'Power Pro Monthly', amount: 4000, method: 'eSewa App', date: '2026-05-10', status: 'Paid' },
-          { id: 'g2', athlete: 'Harvey Specter', pack: 'Gold Annual Pass', amount: 45000, method: 'Cash Drawer', date: '2026-05-08', status: 'Paid' },
-          { id: 'g3', athlete: 'Louis Litt', pack: 'Gym Workout Starter', amount: 2000, method: 'Fonepay scan', date: '2026-05-05', status: 'Overdue' },
+          { _id: 'g1', invoiceNumber: 'INV-GYM-001', customerId: { name: 'Mike Ross' }, total: 4000, paymentMethod: 'eSewa', dueDate: '2026-05-10', status: 'paid' },
+          { _id: 'g2', invoiceNumber: 'INV-GYM-002', customerId: { name: 'Harvey Specter' }, total: 45000, paymentMethod: 'Cash', dueDate: '2026-05-08', status: 'paid' },
+          { _id: 'g3', invoiceNumber: 'INV-GYM-003', customerId: { name: 'Louis Litt' }, total: 2000, paymentMethod: 'Fonepay', dueDate: '2026-05-05', status: 'pending' },
         ];
 
       case 'salon':
         return [
-          { id: 's1', customer: 'Jane Smith', stylist: 'Rachel Green', bill: 4700, tax: 611, method: 'Fonepay scan', date: '2026-05-04', status: 'Completed' },
-          { id: 's2', customer: 'Lisa Cuddy', stylist: 'Chloe Vane', bill: 1200, tax: 156, method: 'Cash Drawer', date: '2026-05-04', status: 'Completed' },
-          { id: 's3', customer: 'Monica Geller', stylist: 'Rachel Green', bill: 3000, tax: 390, method: 'Khalti Wallet', date: '2026-05-03', status: 'Pending' },
+          { _id: 's1', invoiceNumber: 'INV-SALON-001', customerId: { name: 'Jane Smith' }, total: 4700, paymentMethod: 'Fonepay', dueDate: '2026-05-04', status: 'paid' },
+          { _id: 's2', invoiceNumber: 'INV-SALON-002', customerId: { name: 'Lisa Cuddy' }, total: 1200, paymentMethod: 'Cash', dueDate: '2026-05-04', status: 'paid' },
+          { _id: 's3', invoiceNumber: 'INV-SALON-003', customerId: { name: 'Monica Geller' }, total: 3000, paymentMethod: 'Khalti', dueDate: '2026-05-03', status: 'pending' },
         ];
 
       case 'clinic':
         return [
-          { id: 'c1', patient: 'John Doe', claim: 'Dental extraction', amount: 8500, copay: 'Insurer 80%', method: 'Bank Transfer', date: '2026-05-10', status: 'Claim Settled' },
-          { id: 'c2', patient: 'Arthur Pendragon', claim: 'Physio rehab session', amount: 3500, copay: 'Insurer 50%', method: 'Fonepay Scan', date: '2026-05-09', status: 'Claim Logged' },
-          { id: 'c3', patient: 'Ginevra Weasley', claim: 'Clinical Consult', amount: 1500, copay: 'Cash Out of Pocket', date: '2026-05-08', status: 'Settled' },
+          { _id: 'c1', invoiceNumber: 'INV-CLN-001', customerId: { name: 'John Doe' }, total: 8500, paymentMethod: 'Bank Transfer', dueDate: '2026-05-10', status: 'paid' },
+          { _id: 'c2', invoiceNumber: 'INV-CLN-002', customerId: { name: 'Arthur Pendragon' }, total: 3500, paymentMethod: 'Fonepay', dueDate: '2026-05-09', status: 'pending' },
         ];
 
       default:
@@ -117,7 +165,7 @@ const Payments = () => {
     }
   };
 
-  const paymentsData = isSuperAdmin ? getPaymentsData() : transactions;
+  const paymentsData = getPaymentsData();
 
   const getHeaders = () => {
     if (isSuperAdmin)
@@ -140,13 +188,6 @@ const Payments = () => {
 
   const headers = getHeaders();
 
-  // =========================
-  // DEBUG: FINAL DATA STATE
-  // =========================
-  console.log("=== PAYMENTS RENDER ===");
-  console.log("transactions:", transactions.length);
-  console.log("paymentsData:", paymentsData.length);
-
   return (
     <div className="payments-page animate-fade">
 
@@ -156,7 +197,7 @@ const Payments = () => {
           <h1>{headers.title}</h1>
           <p>{headers.desc}</p>
         </div>
-        <button className={`btn btn-primary btn-${accentClass}`}>
+        <button className={`btn btn-primary btn-${accentClass}`} onClick={() => setShowPosModal(true)}>
           <Plus size={16} />
           <span>{isSuperAdmin ? 'New Plan Tier' : 'POS Checkout'}</span>
         </button>
@@ -194,36 +235,49 @@ const Payments = () => {
             </thead>
 
             <tbody>
-              {paymentsData.map((t) => (
-                <tr key={isSuperAdmin ? t.id : t._id}>
-                  {isSuperAdmin ? (
-                    <>
-                      <td>{t.tenant}</td>
-                      <td>{t.plan}</td>
-                      <td>NPR {t.price}</td>
-                      <td>{t.gateway}</td>
-                      <td>{t.date}</td>
-                      <td>{t.status}</td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{t.invoiceNumber}</td>
-                      <td>{t.customerId?.name || "Customer"}</td>
-                      <td>NPR {t.total}</td>
-                      <td>{t.paymentMethod}</td>
-                      <td>{t.dueDate}</td>
-                      <td>{t.status}</td>
-                    </>
-                  )}
+              {paymentsData.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'hsla(var(--text-muted))' }}>
+                    No transactions recorded yet. Click "POS Checkout" to issue your first invoice!
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                paymentsData.map((t) => (
+                  <tr key={isSuperAdmin ? t.id : t._id}>
+                    {isSuperAdmin ? (
+                      <>
+                        <td>{t.tenant}</td>
+                        <td>{t.plan}</td>
+                        <td>NPR {t.price?.toLocaleString()}</td>
+                        <td>{t.gateway}</td>
+                        <td>{t.date}</td>
+                        <td>
+                          <span className="badge active">{t.status}</span>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td><strong>{t.invoiceNumber}</strong></td>
+                        <td>{t.customerId?.name || "Walk-in Customer"}</td>
+                        <td><span style={{ fontWeight: 700, color: currentAccent }}>NPR {t.total?.toLocaleString()}</span></td>
+                        <td><span style={{ textTransform: 'capitalize' }}>{t.paymentMethod}</span></td>
+                        <td>{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Today'}</td>
+                        <td>
+                          <span className={`badge ${t.status === 'paid' ? 'active' : 'pending'}`}>
+                            {t.status === 'paid' ? 'Paid' : 'Pending'}
+                          </span>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))
+              )}
             </tbody>
-
           </table>
         </div>
       </div>
 
-      {/* POS card (UNCHANGED UI) */}
+      {/* POS card */}
       {!isSuperAdmin && (
         <section className="pos-quick-card glass animate-slide-up">
           <div className="pos-calc-desc">
@@ -239,17 +293,86 @@ const Payments = () => {
 
           <button
             className="btn btn-secondary"
-            onClick={() => {
-              console.log("POS button clicked");
-              alert('POS Invoice template provisioned. PDF generated.');
-            }}
+            onClick={() => setShowPosModal(true)}
           >
-            <Download size={16} />
-            <span>Generate PDF Invoice Template</span>
+            <Plus size={16} />
+            <span>New POS Checkout</span>
           </button>
         </section>
       )}
 
+      {/* POS Checkout Modal */}
+      {showPosModal && (
+        <div className="modal-overlay" onClick={() => setShowPosModal(false)}>
+          <div className="modal-card glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3>Create POS Checkout Invoice</h3>
+              <button className="btn-icon" onClick={() => setShowPosModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleCreateInvoice} className="modal-body">
+              <div className="form-group">
+                <label>Select Customer</label>
+                <select className="form-input" value={posForm.customerId} onChange={e => setPosForm(p => ({ ...p, customerId: e.target.value }))}>
+                  <option value="">Walk-in Customer (Default)</option>
+                  {customers.map(c => (
+                    <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Base Amount (NPR) *</label>
+                <input className="form-input" type="number" min="1" required value={posForm.amount} onChange={e => setPosForm(p => ({ ...p, amount: e.target.value }))} placeholder="e.g. 1500" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Tax (NPR)</label>
+                  <input className="form-input" type="number" min="0" value={posForm.tax} onChange={e => setPosForm(p => ({ ...p, tax: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label>Discount (NPR)</label>
+                  <input className="form-input" type="number" min="0" value={posForm.discount} onChange={e => setPosForm(p => ({ ...p, discount: e.target.value }))} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Payment Method</label>
+                  <select className="form-input" value={posForm.paymentMethod} onChange={e => setPosForm(p => ({ ...p, paymentMethod: e.target.value }))}>
+                    <option value="esewa">eSewa App</option>
+                    <option value="khalti">Khalti Wallet</option>
+                    <option value="fonepay">Fonepay QR</option>
+                    <option value="cash">Cash Drawer</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Payment Status</label>
+                  <select className="form-input" value={posForm.status} onChange={e => setPosForm(p => ({ ...p, status: e.target.value }))}>
+                    <option value="paid">Paid Immediately</option>
+                    <option value="pending">Pending Invoice</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ background: 'hsla(var(--primary), 0.05)', padding: '12px 16px', borderRadius: '8px', marginTop: '8px' }}>
+                <strong style={{ fontSize: '0.9rem' }}>Net Payable: </strong>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: currentAccent, marginLeft: '8px' }}>
+                  NPR {((Number(posForm.amount) || 0) + (Number(posForm.tax) || 0) - (Number(posForm.discount) || 0)).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="modal-footer" style={{ marginTop: '20px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowPosModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={submittingPos} style={{ backgroundColor: currentAccent }}>
+                  {submittingPos ? 'Generating...' : 'Issue Invoice'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Embedded CSS */}
       <style>{`

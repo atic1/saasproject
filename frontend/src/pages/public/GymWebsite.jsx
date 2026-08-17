@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import API_BASE from '../../config/api.js';
+import SalonWebsite from './SalonWebsite';
 import {
   Phone, Mail, MapPin, Clock,
   Star, ChevronRight, Dumbbell, Zap, Heart, Target,
   Users, Award, ArrowRight, CheckCircle,
   X, Menu, Copy, ExternalLink, Shield, Flame, TrendingUp
 } from 'lucide-react';
+import SpecialOfferPopup from '../../components/offers/SpecialOfferPopup';
 
 // ── Custom SVG social brand icons ──────────────────────────
 const Facebook = ({ size = 20, ...p }) => (
@@ -43,9 +45,9 @@ const GymNotFound = ({ slug }) => (
   <div style={S.notFoundPage}>
     <div style={S.notFoundCard}>
       <div style={S.notFoundIcon}><Dumbbell size={56} color="#6366f1" /></div>
-      <h1 style={S.notFoundTitle}>Gym Not Found</h1>
-      <p style={S.notFoundSub}>No gym registered at <strong style={{ color: '#6366f1' }}>/{slug}</strong></p>
-      <p style={S.notFoundMeta}>The gym may not exist or its URL may have changed.</p>
+      <h1 style={S.notFoundTitle}>Website Not Found</h1>
+      <p style={S.notFoundSub}>No business registered at <strong style={{ color: '#6366f1' }}>/{slug}</strong></p>
+      <p style={S.notFoundMeta}>The business may not exist or its URL may have changed.</p>
       <Link to="/" style={S.notFoundBtn}><ArrowRight size={18} /> Go to Homepage</Link>
     </div>
   </div>
@@ -55,7 +57,7 @@ const GymNotFound = ({ slug }) => (
 const LoadingScreen = () => (
   <div style={S.loadingWrap}>
     <div style={S.spinner} />
-    <p style={{ color: '#9ca3af', marginTop: 16, fontWeight: 600 }}>Loading gym website…</p>
+    <p style={{ color: '#9ca3af', marginTop: 16, fontWeight: 600 }}>Loading website…</p>
   </div>
 );
 
@@ -155,6 +157,11 @@ const GymWebsite = () => {
   if (loading) return <LoadingScreen />;
   if (notFound || !data) return <GymNotFound slug={slug} />;
 
+  // Render Salon UI if business type is salon
+  if (data.business?.type === 'salon') {
+    return <SalonWebsite data={data} slug={slug} />;
+  }
+
   const { business, gymWebsite: gw = {}, plans = [], trainers = [], services = [], gallery = [] } = data;
 
   const gymName    = business?.name || 'Gym';
@@ -189,6 +196,7 @@ const GymWebsite = () => {
 
   const navLinks = [
     { label: 'About',      id: 'about' },
+    offers.length > 0   ? { label: 'Offers',    id: 'offers'    } : null,
     plans.length > 0    ? { label: 'Plans',     id: 'plans'     } : null,
     trainers.length > 0 ? { label: 'Trainers',  id: 'trainers'  } : null,
     services.length > 0 ? { label: 'Services',  id: 'services'  } : null,
@@ -479,7 +487,98 @@ const GymWebsite = () => {
           </div>
         </section>
       )}
+      {/* ───────────────── SPECIAL OFFERS ───────────────── */}
+      {offers.length > 0 && (
+        <section id="offers" style={{ ...S.section, background: 'linear-gradient(180deg,#0b0712 0%,#130f26 100%)', borderTop: '1px solid rgba(99,102,241,0.15)', borderBottom: '1px solid rgba(99,102,241,0.15)' }}>
+          <div style={S.container}>
+            <div style={{ textAlign: 'center', marginBottom: 56 }}>
+              <div style={{ ...S.sectionTag, background: 'rgba(236,72,153,0.15)', color: '#f472b6', border: '1px solid rgba(236,72,153,0.3)' }}>
+                <Sparkles size={14} /> Limited-Time Deals
+              </div>
+              <h2 style={{ ...S.sectionTitle, color: '#fff' }}>
+                Special <span style={{ color: '#ec4899' }}>Offers</span> & Promotions
+              </h2>
+              <p style={{ ...S.sectionSub, color: '#9ca3af', margin: '0 auto' }}>
+                Take advantage of exclusive discounts and promo codes for your membership.
+              </p>
+            </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+              {offers.map(offer => {
+                const discountLabel = offer.discount?.type === 'percentage'
+                  ? `${offer.discount.value}% OFF`
+                  : offer.discount?.type === 'fixed_amount'
+                  ? `NPR ${offer.discount.value} OFF`
+                  : 'Special Promo';
+                const endDate = offer.validity?.endDate
+                  ? new Date(offer.validity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : null;
+                return (
+                  <div key={offer._id} className="gw-card-hover" style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(236,72,153,0.25)',
+                    borderRadius: 24,
+                    padding: 28,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    <div>
+                      {offer.display?.bannerImage && (
+                        <div style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 18, height: 140 }}>
+                          <img src={offer.display.bannerImage} alt={offer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'inline-flex', alignItems: 'center', background: 'linear-gradient(135deg,#ec4899,#be185d)', color: '#fff', padding: '6px 16px', borderRadius: 9999, fontSize: '0.82rem', fontWeight: 800, marginBottom: 14, boxShadow: '0 6px 20px rgba(236,72,153,0.4)' }}>
+                        🏷️ {discountLabel}
+                      </div>
+                      <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#ffffff', marginBottom: 8 }}>{offer.name}</h3>
+                      {offer.description && (
+                        <p style={{ color: '#9ca3af', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 16 }}>{offer.description}</p>
+                      )}
+                      {offer.code && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(236,72,153,0.1)', border: '1px dashed rgba(236,72,153,0.4)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+                          <span style={{ color: '#9ca3af', fontSize: '0.82rem', fontWeight: 600 }}>Promo Code:</span>
+                          <code style={{ color: '#f472b6', fontWeight: 800, fontSize: '1rem', letterSpacing: '0.05em' }}>{offer.code}</code>
+                        </div>
+                      )}
+                      {endDate && (
+                        <p style={{ fontSize: '0.78rem', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 6, margin: '8px 0 0' }}>
+                          <Clock size={12} /> Valid until <strong style={{ color: '#fbbf24' }}>{endDate}</strong>
+                        </p>
+                      )}
+                    </div>
+                    <Link
+                      to={`/${slug}/signup`}
+                      style={{
+                        marginTop: 20,
+                        padding: '12px 20px',
+                        borderRadius: 14,
+                        background: 'linear-gradient(135deg,#ec4899,#be185d)',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        boxShadow: '0 8px 24px rgba(236,72,153,0.35)'
+                      }}
+                    >
+                      <span>Claim This Offer</span>
+                      <ArrowRight size={15} />
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
       {/* ───────────────── TRAINERS ───────────────── */}
       {trainers.length > 0 && (
         <section id="trainers" style={S.section}>
@@ -527,21 +626,64 @@ const GymWebsite = () => {
         <section id="services" style={{ ...S.section, background: 'linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)' }}>
           <div style={S.container}>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <div style={S.sectionTag}><Zap size={14} /> What We Offer</div>
-              <h2 style={S.sectionTitle}>Our <span style={{ color: '#6366f1' }}>Services</span></h2>
-              <p style={{ ...S.sectionSub, margin: '0 auto' }}>Everything you need to reach your fitness goals</p>
+              <div style={{ ...S.sectionTag, color: business?.type === 'salon' ? '#ec4899' : '#6366f1' }}>
+                <Zap size={14} /> {business?.type === 'salon' ? 'Beauty & Spa Treatments' : 'What We Offer'}
+              </div>
+              <h2 style={S.sectionTitle}>
+                Our <span style={{ color: business?.type === 'salon' ? '#ec4899' : '#6366f1' }}>Services</span>
+              </h2>
+              <p style={{ ...S.sectionSub, margin: '0 auto' }}>
+                {business?.type === 'salon'
+                  ? 'Explore our curated menu of beauty services and luxury spa treatments'
+                  : 'Everything you need to reach your fitness goals'}
+              </p>
             </div>
 
             <div className="gw-services-grid" style={S.servicesGrid}>
               {services.map((s, i) => {
                 const Icon = serviceIcons[i % serviceIcons.length];
                 return (
-                  <div key={s._id} className="gw-card-hover" style={S.serviceCard}>
-                    <div style={{ ...S.serviceIcon, background: serviceGradients[i % serviceGradients.length] }}>
-                      <Icon size={28} color="#fff" />
+                  <div key={s._id} className="gw-card-hover" style={{ ...S.serviceCard, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ ...S.serviceIcon, background: business?.type === 'salon' ? 'linear-gradient(135deg,#ec4899,#be185d)' : serviceGradients[i % serviceGradients.length] }}>
+                        <Icon size={28} color="#fff" />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                        <h3 style={S.serviceTitle}>{s.serviceName || s.name}</h3>
+                        {s.price && (
+                          <span style={{ fontWeight: 800, fontSize: '0.92rem', color: business?.type === 'salon' ? '#db2777' : '#4f46e5' }}>
+                            NPR {s.price}
+                          </span>
+                        )}
+                      </div>
+                      {s.description && <p style={S.serviceDesc}>{s.description}</p>}
+                      {s.duration && (
+                        <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: 6, fontWeight: 600 }}>
+                          ⏱️ Duration: {s.duration} mins
+                        </p>
+                      )}
                     </div>
-                    <h3 style={S.serviceTitle}>{s.serviceName}</h3>
-                    {s.description && <p style={S.serviceDesc}>{s.description}</p>}
+                    <Link
+                      to={`/${slug}/signup?service=${s._id}`}
+                      style={{
+                        marginTop: 16,
+                        padding: '10px 16px',
+                        borderRadius: 12,
+                        background: business?.type === 'salon' ? 'rgba(236,72,153,0.1)' : 'rgba(99,102,241,0.1)',
+                        color: business?.type === 'salon' ? '#db2777' : '#4f46e5',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justify: 'center',
+                        gap: 6,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span>Book Service</span>
+                      <ArrowRight size={14} />
+                    </Link>
                   </div>
                 );
               })}
@@ -913,15 +1055,15 @@ const GymWebsite = () => {
         <Dumbbell size={18} /> {isAuthenticated ? "Go to Portal" : "Join Now"}
       </Link>
 
-      {/* ── Offers Popup ── */}
+      {/* ── Advanced Special Offer Popup & Reopen Badge ── */}
       {showOfferPopup && offers.length > 0 && (
-        <OffersPopup
-          offer={offers[0]}
-          gymName={gymName}
-          onClose={dismissPopup}
-          onViewPlans={() => { scrollTo('plans'); dismissPopup(); }}
-          codeCopied={codeCopied}
-          onCopyCode={copyCode}
+        <SpecialOfferPopup
+          offers={offers}
+          businessName={gymName}
+          businessType="gym"
+          slug={slug}
+          isOpen={showOfferPopup}
+          onClose={() => setShowOfferPopup(false)}
         />
       )}
     </div>
