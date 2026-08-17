@@ -61,9 +61,15 @@ export default function SpecialOfferPopup({
   };
 
   const isSalon = businessType === 'salon';
-  const primaryColor = isSalon ? '#ec4899' : '#6366f1';
-  const secondaryColor = isSalon ? '#f472b6' : '#8b5cf6';
-  const accentGlow = isSalon ? 'rgba(236,72,153,0.35)' : 'rgba(99,102,241,0.35)';
+  const isClinic = businessType === 'clinic';
+  const primaryColor = isClinic ? '#0ea5e9' : isSalon ? '#ec4899' : '#6366f1';
+  const secondaryColor = isClinic ? '#38bdf8' : isSalon ? '#f472b6' : '#8b5cf6';
+  const accentGlow = isClinic ? 'rgba(14,165,233,0.35)' : isSalon ? 'rgba(236,72,153,0.35)' : 'rgba(99,102,241,0.35)';
+  const bgGradient = isClinic
+    ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)'
+    : isSalon
+    ? 'linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)'
+    : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)';
 
   // If dismissed by user, show a floating pulsating button in bottom-right to reopen anytime
   if (minimized) {
@@ -86,14 +92,12 @@ export default function SpecialOfferPopup({
           }
           @keyframes pulseGlow {
             0%, 100% { box-shadow: 0 0 20px ${accentGlow}; }
-            50% { box-shadow: 0 0 35px ${isSalon ? 'rgba(236,72,153,0.7)' : 'rgba(99,102,241,0.7)'}; }
+            50% { box-shadow: 0 0 35px ${isClinic ? 'rgba(14,165,233,0.7)' : isSalon ? 'rgba(236,72,153,0.7)' : 'rgba(99,102,241,0.7)'}; }
           }
         `}</style>
         <div
           style={{
-            background: isSalon
-              ? 'linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)'
-              : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)',
+            background: bgGradient,
             color: '#fff',
             padding: '12px 20px',
             borderRadius: 9999,
@@ -179,7 +183,7 @@ export default function SpecialOfferPopup({
           maxWidth: '560px',
           background: 'linear-gradient(160deg, #161026 0%, #0d0918 60%, #170d1e 100%)',
           borderRadius: '28px',
-          border: `1.5px solid ${isSalon ? 'rgba(244,114,182,0.35)' : 'rgba(129,140,248,0.35)'}`,
+          border: `1.5px solid ${isClinic ? 'rgba(56,189,248,0.35)' : isSalon ? 'rgba(244,114,182,0.35)' : 'rgba(129,140,248,0.35)'}`,
           boxShadow: `0 25px 70px -10px ${accentGlow}, 0 0 50px rgba(0,0,0,0.8)`,
           overflow: 'hidden',
           animation: 'modalZoomIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards'
@@ -208,7 +212,7 @@ export default function SpecialOfferPopup({
             width: '280px',
             height: '280px',
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${isSalon ? 'rgba(251,191,36,0.15)' : 'rgba(56,189,248,0.15)'} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${isClinic ? 'rgba(45,212,191,0.15)' : isSalon ? 'rgba(251,191,36,0.15)' : 'rgba(56,189,248,0.15)'} 0%, transparent 70%)`,
             filter: 'blur(50px)',
             pointerEvents: 'none'
           }}
@@ -285,7 +289,7 @@ export default function SpecialOfferPopup({
                 gap: 6
               }}
             >
-              <Sparkles size={13} color={isSalon ? '#f472b6' : '#818cf8'} />
+              <Sparkles size={13} color={isClinic ? '#38bdf8' : isSalon ? '#f472b6' : '#818cf8'} />
               <span>Special Offer</span>
             </div>
           </div>
@@ -303,11 +307,11 @@ export default function SpecialOfferPopup({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                background: isSalon ? 'rgba(236,72,153,0.15)' : 'rgba(99,102,241,0.15)',
-                border: `1px solid ${isSalon ? 'rgba(236,72,153,0.35)' : 'rgba(99,102,241,0.35)'}`,
+                background: isClinic ? 'rgba(14,165,233,0.15)' : isSalon ? 'rgba(236,72,153,0.15)' : 'rgba(99,102,241,0.15)',
+                border: `1px solid ${isClinic ? 'rgba(56,189,248,0.35)' : isSalon ? 'rgba(236,72,153,0.35)' : 'rgba(99,102,241,0.35)'}`,
                 padding: '6px 14px',
                 borderRadius: 9999,
-                color: isSalon ? '#f472b6' : '#a5b4fc',
+                color: isClinic ? '#38bdf8' : isSalon ? '#f472b6' : '#a5b4fc',
                 fontSize: '0.8rem',
                 fontWeight: 800,
                 textTransform: 'uppercase',
@@ -345,7 +349,9 @@ export default function SpecialOfferPopup({
                 display: 'inline-flex',
                 alignItems: 'baseline',
                 gap: 8,
-                background: isSalon
+                background: isClinic
+                  ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 60%, #0369a1 100%)'
+                  : isSalon
                   ? 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)'
                   : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 60%, #3730a3 100%)',
                 color: '#ffffff',
@@ -412,7 +418,7 @@ export default function SpecialOfferPopup({
             <div
               style={{
                 background: 'rgba(255, 255, 255, 0.04)',
-                border: `1.5px dashed ${isSalon ? 'rgba(244,114,182,0.45)' : 'rgba(129,140,248,0.45)'}`,
+                border: `1.5px dashed ${isClinic ? 'rgba(56,189,248,0.45)' : isSalon ? 'rgba(244,114,182,0.45)' : 'rgba(129,140,248,0.45)'}`,
                 borderRadius: '18px',
                 padding: '14px 18px',
                 marginBottom: 24,
@@ -440,7 +446,7 @@ export default function SpecialOfferPopup({
                   style={{
                     fontSize: '1.25rem',
                     fontWeight: 900,
-                    color: isSalon ? '#f472b6' : '#a5b4fc',
+                    color: isClinic ? '#38bdf8' : isSalon ? '#f472b6' : '#a5b4fc',
                     letterSpacing: '0.08em',
                     fontFamily: 'monospace'
                   }}
@@ -454,17 +460,21 @@ export default function SpecialOfferPopup({
                 style={{
                   background: copied
                     ? 'linear-gradient(135deg, #10b981, #059669)'
+                    : isClinic
+                    ? 'rgba(14,165,233,0.2)'
                     : isSalon
                     ? 'rgba(236,72,153,0.2)'
                     : 'rgba(99,102,241,0.2)',
                   border: `1px solid ${
                     copied
                       ? '#10b981'
+                      : isClinic
+                      ? 'rgba(56,189,248,0.4)'
                       : isSalon
                       ? 'rgba(236,72,153,0.4)'
                       : 'rgba(99,102,241,0.4)'
                   }`,
-                  color: copied ? '#ffffff' : isSalon ? '#f472b6' : '#a5b4fc',
+                  color: copied ? '#ffffff' : isClinic ? '#38bdf8' : isSalon ? '#f472b6' : '#a5b4fc',
                   padding: '10px 18px',
                   borderRadius: '12px',
                   fontWeight: 800,
@@ -523,7 +533,9 @@ export default function SpecialOfferPopup({
                 flex: 1,
                 padding: '14px 24px',
                 borderRadius: '16px',
-                background: isSalon
+                background: isClinic
+                  ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)'
+                  : isSalon
                   ? 'linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)'
                   : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)',
                 color: '#ffffff',
