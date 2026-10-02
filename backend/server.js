@@ -24,17 +24,28 @@ app.use(helmet());
 const corsOrigin = process.env.CORS_ORIGIN;
 app.use(cors({
   origin: function (origin, callback) {
-    // If no CORS_ORIGIN is specified or set to wildcard, allow all
+    // Allow non-browser requests (e.g. mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // If no CORS_ORIGIN is specified or set to wildcard, allow all origins
     if (!corsOrigin || corsOrigin === '*') {
-      callback(null, true);
-    } else {
-      const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      return callback(null, true);
     }
+
+    const allowedOrigins = corsOrigin.split(',').map(o => o.trim().replace(/\/$/, ''));
+    const originClean = origin.replace(/\/$/, '');
+
+    // Allow explicitly defined origins, vercel previews/deployments, and local dev
+    if (
+      allowedOrigins.includes(originClean) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
